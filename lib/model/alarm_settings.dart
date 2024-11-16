@@ -47,7 +47,7 @@ class AlarmSettings {
 
     return AlarmSettings(
       id: json['id'] as int,
-      title: json['title'] as String? ?? 'Untitled', // Parse title with default.
+      title: json['title'] as String? ?? '', // Parse title with default.
       dateTime: DateTime.fromMicrosecondsSinceEpoch(json['dateTime'] as int),
       assetAudioPath: json['assetAudioPath'] as String,
       notificationSettings: notificationSettings,
