@@ -20,6 +20,9 @@ class AlarmSettings {
     this.warningNotificationOnKill = true,
     this.androidFullScreenIntent = true,
     this.repeatingDays = const [], // New: Added repeatingDays with default empty list.
+    this.snoozeLimit = 5, // New: Added snoozeLimit with a default value of 5.
+    this.snoozeInterval = 10, // New: Added snoozeInterval with a default value of 10 (in minutes).
+    this.isSnoozed = false, // New: Added isSnoozed to track snooze state.
   });
 
   /// Constructs an `AlarmSettings` instance from the given JSON data.
@@ -59,7 +62,11 @@ class AlarmSettings {
       fadeDuration: json['fadeDuration'] as double? ?? 0.0,
       warningNotificationOnKill: warningNotificationOnKill,
       androidFullScreenIntent: json['androidFullScreenIntent'] as bool? ?? true,
-      repeatingDays: (json['repeatingDays'] as List<dynamic>?)?.cast<int>() ?? [], // New: Parse repeatingDays from JSON.
+      repeatingDays:
+      (json['repeatingDays'] as List<dynamic>?)?.cast<int>() ?? [], // New: Parse repeatingDays from JSON.
+      snoozeLimit: json['snoozeLimit'] as int? ?? 5, // New: Parse snoozeLimit from JSON.
+      snoozeInterval: json['snoozeInterval'] as int? ?? 10, // New: Parse snoozeInterval from JSON.
+      isSnoozed: json['isSnoozed'] as bool? ?? false, // New: Parse isSnoozed from JSON.
     );
   }
 
@@ -69,8 +76,7 @@ class AlarmSettings {
   /// Date and time when the alarm will be triggered.
   final DateTime dateTime;
 
-  /// Path to audio asset to be used as the alarm ringtone. Accepted formats:
-  /// (Detailed description omitted for brevity)
+  /// Path to audio asset to be used as the alarm ringtone.
   final String assetAudioPath;
 
   /// Settings for the notification.
@@ -100,12 +106,20 @@ class AlarmSettings {
   /// when Android alarm notification is triggered.
   final bool androidFullScreenIntent;
 
-  /// New: List of days (represented by integers) when the alarm should repeat.
+  /// List of days (represented by integers) when the alarm should repeat.
   /// 0: Sunday, 1: Monday, ..., 6: Saturday.
   final List<int> repeatingDays;
 
-  /// Returns a hash code for this `AlarmSettings` instance using
-  /// Jenkins hash function.
+  /// New: Maximum number of times the alarm can be snoozed.
+  final int snoozeLimit;
+
+  /// New: Interval (in minutes) between snoozes.
+  final int snoozeInterval;
+
+  /// New: Tracks whether the alarm is currently snoozed.
+  final bool isSnoozed;
+
+  /// Returns a hash code for this `AlarmSettings` instance using Jenkins hash function.
   @override
   int get hashCode {
     var hash = 0;
@@ -122,6 +136,9 @@ class AlarmSettings {
     hash = hash ^ warningNotificationOnKill.hashCode;
     hash = hash ^ androidFullScreenIntent.hashCode;
     hash = hash ^ repeatingDays.hashCode; // New: Include repeatingDays in hashCode.
+    hash = hash ^ snoozeLimit.hashCode; // New: Include snoozeLimit in hashCode.
+    hash = hash ^ snoozeInterval.hashCode; // New: Include snoozeInterval in hashCode.
+    hash = hash ^ isSnoozed.hashCode; // New: Include isSnoozed in hashCode.
     hash = hash & 0x3fffffff;
 
     return hash;
@@ -144,6 +161,9 @@ class AlarmSettings {
     bool? warningNotificationOnKill,
     bool? androidFullScreenIntent,
     List<int>? repeatingDays, // New: Add repeatingDays to copyWith method.
+    int? snoozeLimit, // New: Add snoozeLimit to copyWith method.
+    int? snoozeInterval, // New: Add snoozeInterval to copyWith method.
+    bool? isSnoozed, // New: Add isSnoozed to copyWith method.
   }) {
     return AlarmSettings(
       id: id ?? this.id,
@@ -160,6 +180,9 @@ class AlarmSettings {
       androidFullScreenIntent:
       androidFullScreenIntent ?? this.androidFullScreenIntent,
       repeatingDays: repeatingDays ?? this.repeatingDays, // New: Use repeatingDays.
+      snoozeLimit: snoozeLimit ?? this.snoozeLimit, // New: Use snoozeLimit.
+      snoozeInterval: snoozeInterval ?? this.snoozeInterval, // New: Use snoozeInterval.
+      isSnoozed: isSnoozed ?? this.isSnoozed, // New: Use isSnoozed.
     );
   }
 
@@ -177,33 +200,8 @@ class AlarmSettings {
     'warningNotificationOnKill': warningNotificationOnKill,
     'androidFullScreenIntent': androidFullScreenIntent,
     'repeatingDays': repeatingDays, // New: Add repeatingDays to JSON serialization.
+    'snoozeLimit': snoozeLimit, // New: Add snoozeLimit to JSON serialization.
+    'snoozeInterval': snoozeInterval, // New: Add snoozeInterval to JSON serialization.
+    'isSnoozed': isSnoozed, // New: Add isSnoozed to JSON serialization.
   };
-
-  /// Returns all the properties of `AlarmSettings` for debug purposes.
-  @override
-  String toString() {
-    final json = toJson();
-    json['dateTime'] =
-        DateTime.fromMicrosecondsSinceEpoch(json['dateTime'] as int);
-
-    return 'AlarmSettings: $json';
-  }
-
-  /// Compares two AlarmSettings.
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-          other is AlarmSettings &&
-              runtimeType == other.runtimeType &&
-              id == other.id &&
-              dateTime == other.dateTime &&
-              assetAudioPath == other.assetAudioPath &&
-              notificationSettings == other.notificationSettings &&
-              loopAudio == other.loopAudio &&
-              vibrate == other.vibrate &&
-              volume == other.volume &&
-              fadeDuration == other.fadeDuration &&
-              warningNotificationOnKill == other.warningNotificationOnKill &&
-              androidFullScreenIntent == other.androidFullScreenIntent &&
-              repeatingDays == other.repeatingDays; // New: Add repeatingDays to equality check.
 }
