@@ -142,6 +142,12 @@ class Alarm {
     return iOS ? await IOSAlarm.stopAlarm(id) : await AndroidAlarm.stop(id);
   }
 
+  /// Stops alarm.
+  static Future<bool> disableAlarm(int id) async {
+    updateStream.add(id);
+    return iOS ? await IOSAlarm.stopAlarm(id) : await AndroidAlarm.stop(id);
+  }
+
   /// Stops all the alarms.
   static Future<void> stopAll() async {
     final alarms = getAlarms();

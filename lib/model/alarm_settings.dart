@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 class AlarmSettings {
   const AlarmSettings({
     required this.id,
-    required this.title, // Added title.
+    required this.title,
     required this.dateTime,
     required this.assetAudioPath,
     required this.notificationSettings,
@@ -20,6 +20,7 @@ class AlarmSettings {
     this.snoozeLimit = 5,
     this.snoozeInterval = 10,
     this.isSnoozed = false,
+    this.isEnabled = true, // Default value for the new property.
   });
 
   factory AlarmSettings.fromJson(Map<String, dynamic> json) {
@@ -47,7 +48,7 @@ class AlarmSettings {
 
     return AlarmSettings(
       id: json['id'] as int,
-      title: json['title'] as String? ?? '', // Parse title with default.
+      title: json['title'] as String? ?? '',
       dateTime: DateTime.fromMicrosecondsSinceEpoch(json['dateTime'] as int),
       assetAudioPath: json['assetAudioPath'] as String,
       notificationSettings: notificationSettings,
@@ -57,16 +58,19 @@ class AlarmSettings {
       volumeEnforced: json['volumeEnforced'] as bool? ?? false,
       fadeDuration: json['fadeDuration'] as double? ?? 0.0,
       warningNotificationOnKill: warningNotificationOnKill,
-      androidFullScreenIntent: json['androidFullScreenIntent'] as bool? ?? true,
-      repeatingDays: (json['repeatingDays'] as List<dynamic>?)?.cast<int>() ?? [],
+      androidFullScreenIntent:
+      json['androidFullScreenIntent'] as bool? ?? true,
+      repeatingDays:
+      (json['repeatingDays'] as List<dynamic>?)?.cast<int>() ?? [],
       snoozeLimit: json['snoozeLimit'] as int? ?? 5,
       snoozeInterval: json['snoozeInterval'] as int? ?? 10,
       isSnoozed: json['isSnoozed'] as bool? ?? false,
+      isEnabled: json['isEnabled'] as bool? ?? true, // Parse new field.
     );
   }
 
   final int id;
-  final String title; // Added title.
+  final String title;
   final DateTime dateTime;
   final String assetAudioPath;
   final NotificationSettings notificationSettings;
@@ -81,13 +85,14 @@ class AlarmSettings {
   final int snoozeLimit;
   final int snoozeInterval;
   final bool isSnoozed;
+  final bool isEnabled; // New property.
 
   @override
   int get hashCode {
     var hash = 0;
 
     hash = hash ^ id.hashCode;
-    hash = hash ^ title.hashCode; // Include title in hashCode.
+    hash = hash ^ title.hashCode;
     hash = hash ^ dateTime.hashCode;
     hash = hash ^ assetAudioPath.hashCode;
     hash = hash ^ notificationSettings.hashCode;
@@ -102,6 +107,7 @@ class AlarmSettings {
     hash = hash ^ snoozeLimit.hashCode;
     hash = hash ^ snoozeInterval.hashCode;
     hash = hash ^ isSnoozed.hashCode;
+    hash = hash ^ isEnabled.hashCode; // Include new property.
     hash = hash & 0x3fffffff;
 
     return hash;
@@ -109,7 +115,7 @@ class AlarmSettings {
 
   AlarmSettings copyWith({
     int? id,
-    String? title, // Added title to copyWith.
+    String? title,
     DateTime? dateTime,
     String? assetAudioPath,
     NotificationSettings? notificationSettings,
@@ -124,10 +130,11 @@ class AlarmSettings {
     int? snoozeLimit,
     int? snoozeInterval,
     bool? isSnoozed,
+    bool? isEnabled, // Add copyWith for new property.
   }) {
     return AlarmSettings(
       id: id ?? this.id,
-      title: title ?? this.title, // Use new or existing title.
+      title: title ?? this.title,
       dateTime: dateTime ?? this.dateTime,
       assetAudioPath: assetAudioPath ?? this.assetAudioPath,
       notificationSettings: notificationSettings ?? this.notificationSettings,
@@ -144,12 +151,13 @@ class AlarmSettings {
       snoozeLimit: snoozeLimit ?? this.snoozeLimit,
       snoozeInterval: snoozeInterval ?? this.snoozeInterval,
       isSnoozed: isSnoozed ?? this.isSnoozed,
+      isEnabled: isEnabled ?? this.isEnabled,
     );
   }
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'title': title, // Add title to JSON serialization.
+    'title': title,
     'dateTime': dateTime.microsecondsSinceEpoch,
     'assetAudioPath': assetAudioPath,
     'notificationSettings': notificationSettings.toJson(),
@@ -164,5 +172,6 @@ class AlarmSettings {
     'snoozeLimit': snoozeLimit,
     'snoozeInterval': snoozeInterval,
     'isSnoozed': isSnoozed,
+    'isEnabled': isEnabled, // Serialize new property.
   };
 }
