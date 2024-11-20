@@ -66,7 +66,7 @@ class Alarm {
         }
       } else {
         final isRinging = await Alarm.isRinging(alarm.id);
-        isRinging ? ringStream.add(alarm) : await stop(alarm.id);
+        isRinging ? ringStream.add(alarm) : await disableAlarm(alarm.id);
       }
     }
   }
