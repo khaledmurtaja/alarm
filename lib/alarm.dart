@@ -57,7 +57,7 @@ class Alarm {
 
     for (final alarm in alarms) {
       final now = DateTime.now();
-      if (alarm.dateTime.isAfter(now)) {
+      if (alarm.dateTime.isAfter(now)&&alarm.isEnabled!=false) {
         print(alarm.isEnabled);
         await set(alarmSettings: alarm);
       } else {
