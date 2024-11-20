@@ -145,7 +145,7 @@ class Alarm {
 
   /// Stops alarm.
   static Future<bool> disableAlarm(int id) async {
-    updateStream.add(id);
+    // updateStream.add(id);
     return iOS ? await IOSAlarm.stopAlarm(id) : await AndroidAlarm.stop(id);
   }
 
