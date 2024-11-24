@@ -80,7 +80,7 @@ class Alarm {
 
     for (final alarm in getAlarms()) {
       if (alarm.id == alarmSettings.id ||
-          alarm.dateTime.isSameSecond(alarmSettings.dateTime)) {
+          isSameMinute(alarm.dateTime,alarmSettings.dateTime)) {
         await Alarm.stop(alarm.id);
       }
     }
@@ -193,5 +193,13 @@ class Alarm {
   static Future<void> reload(int id) async {
     await AlarmStorage.prefs.reload();
     updateStream.add(id);
+  }
+  ///check if alarms have the same minute
+   static bool isSameMinute(DateTime first, DateTime second) {
+    return first.year == second.year &&
+        first.month == second.month &&
+        first.day == second.day &&
+        first.hour == second.hour &&
+        first.minute == second.minute;
   }
 }
