@@ -8,6 +8,7 @@ class AlarmSettings {
     required this.title,
     required this.dateTime,
     required this.assetAudioPath,
+    required this.audioName, // New property for audio name.
     required this.notificationSettings,
     this.loopAudio = true,
     this.vibrate = true,
@@ -20,7 +21,7 @@ class AlarmSettings {
     this.snoozeLimit = 5,
     this.snoozeInterval = 10,
     this.isSnoozed = false,
-    this.isEnabled = true, // Default value for the new property.
+    this.isEnabled = true,
   });
 
   factory AlarmSettings.fromJson(Map<String, dynamic> json) {
@@ -51,6 +52,7 @@ class AlarmSettings {
       title: json['title'] as String? ?? '',
       dateTime: DateTime.fromMicrosecondsSinceEpoch(json['dateTime'] as int),
       assetAudioPath: json['assetAudioPath'] as String,
+      audioName: json['audioName'] as String? ?? '', // Parse new property.
       notificationSettings: notificationSettings,
       loopAudio: json['loopAudio'] as bool? ?? true,
       vibrate: json['vibrate'] as bool? ?? true,
@@ -65,7 +67,7 @@ class AlarmSettings {
       snoozeLimit: json['snoozeLimit'] as int? ?? 5,
       snoozeInterval: json['snoozeInterval'] as int? ?? 10,
       isSnoozed: json['isSnoozed'] as bool? ?? false,
-      isEnabled: json['isEnabled'] as bool? ?? true, // Parse new field.
+      isEnabled: json['isEnabled'] as bool? ?? true,
     );
   }
 
@@ -73,6 +75,7 @@ class AlarmSettings {
   final String title;
   final DateTime dateTime;
   final String assetAudioPath;
+  final String audioName; // New property.
   final NotificationSettings notificationSettings;
   final bool loopAudio;
   final bool vibrate;
@@ -85,7 +88,7 @@ class AlarmSettings {
   final int snoozeLimit;
   final int snoozeInterval;
   final bool isSnoozed;
-  final bool isEnabled; // New property.
+  final bool isEnabled;
 
   @override
   int get hashCode {
@@ -95,6 +98,7 @@ class AlarmSettings {
     hash = hash ^ title.hashCode;
     hash = hash ^ dateTime.hashCode;
     hash = hash ^ assetAudioPath.hashCode;
+    hash = hash ^ audioName.hashCode; // Include new property.
     hash = hash ^ notificationSettings.hashCode;
     hash = hash ^ loopAudio.hashCode;
     hash = hash ^ vibrate.hashCode;
@@ -107,7 +111,7 @@ class AlarmSettings {
     hash = hash ^ snoozeLimit.hashCode;
     hash = hash ^ snoozeInterval.hashCode;
     hash = hash ^ isSnoozed.hashCode;
-    hash = hash ^ isEnabled.hashCode; // Include new property.
+    hash = hash ^ isEnabled.hashCode;
     hash = hash & 0x3fffffff;
 
     return hash;
@@ -118,6 +122,7 @@ class AlarmSettings {
     String? title,
     DateTime? dateTime,
     String? assetAudioPath,
+    String? audioName, // Add copyWith for new property.
     NotificationSettings? notificationSettings,
     bool? loopAudio,
     bool? vibrate,
@@ -130,13 +135,14 @@ class AlarmSettings {
     int? snoozeLimit,
     int? snoozeInterval,
     bool? isSnoozed,
-    bool? isEnabled, // Add copyWith for new property.
+    bool? isEnabled,
   }) {
     return AlarmSettings(
       id: id ?? this.id,
       title: title ?? this.title,
       dateTime: dateTime ?? this.dateTime,
       assetAudioPath: assetAudioPath ?? this.assetAudioPath,
+      audioName: audioName ?? this.audioName, // Handle new property.
       notificationSettings: notificationSettings ?? this.notificationSettings,
       loopAudio: loopAudio ?? this.loopAudio,
       vibrate: vibrate ?? this.vibrate,
@@ -160,6 +166,7 @@ class AlarmSettings {
     'title': title,
     'dateTime': dateTime.microsecondsSinceEpoch,
     'assetAudioPath': assetAudioPath,
+    'audioName': audioName, // Serialize new property.
     'notificationSettings': notificationSettings.toJson(),
     'loopAudio': loopAudio,
     'vibrate': vibrate,
@@ -172,6 +179,6 @@ class AlarmSettings {
     'snoozeLimit': snoozeLimit,
     'snoozeInterval': snoozeInterval,
     'isSnoozed': isSnoozed,
-    'isEnabled': isEnabled, // Serialize new property.
+    'isEnabled': isEnabled,
   };
 }
