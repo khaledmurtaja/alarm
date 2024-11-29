@@ -20,7 +20,7 @@ class AlarmSettings {
     this.repeatingDays = const [],
     this.snoozeLimit = 5,
     this.snoozeInterval = 10,
-    this.isSnoozed = false,
+    this.couldBeSnoozed = false,
     this.isEnabled = true,
   });
 
@@ -66,7 +66,7 @@ class AlarmSettings {
       (json['repeatingDays'] as List<dynamic>?)?.cast<int>() ?? [],
       snoozeLimit: json['snoozeLimit'] as int? ?? 5,
       snoozeInterval: json['snoozeInterval'] as int? ?? 10,
-      isSnoozed: json['isSnoozed'] as bool? ?? false,
+      couldBeSnoozed: json['isSnoozed'] as bool? ?? false,
       isEnabled: json['isEnabled'] as bool? ?? true,
     );
   }
@@ -87,7 +87,7 @@ class AlarmSettings {
   final List<int> repeatingDays;
   final int snoozeLimit;
   final int snoozeInterval;
-  final bool isSnoozed;
+  final bool couldBeSnoozed;
   final bool isEnabled;
 
   @override
@@ -110,7 +110,7 @@ class AlarmSettings {
     hash = hash ^ repeatingDays.hashCode;
     hash = hash ^ snoozeLimit.hashCode;
     hash = hash ^ snoozeInterval.hashCode;
-    hash = hash ^ isSnoozed.hashCode;
+    hash = hash ^ couldBeSnoozed.hashCode;
     hash = hash ^ isEnabled.hashCode;
     hash = hash & 0x3fffffff;
 
@@ -156,7 +156,7 @@ class AlarmSettings {
       repeatingDays: repeatingDays ?? this.repeatingDays,
       snoozeLimit: snoozeLimit ?? this.snoozeLimit,
       snoozeInterval: snoozeInterval ?? this.snoozeInterval,
-      isSnoozed: isSnoozed ?? this.isSnoozed,
+      couldBeSnoozed: isSnoozed ?? this.couldBeSnoozed,
       isEnabled: isEnabled ?? this.isEnabled,
     );
   }
@@ -178,7 +178,7 @@ class AlarmSettings {
     'repeatingDays': repeatingDays,
     'snoozeLimit': snoozeLimit,
     'snoozeInterval': snoozeInterval,
-    'isSnoozed': isSnoozed,
+    'isSnoozed': couldBeSnoozed,
     'isEnabled': isEnabled,
   };
 }
