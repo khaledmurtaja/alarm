@@ -19,6 +19,7 @@ class AlarmSettings {
     this.androidFullScreenIntent = true,
     this.repeatingDays = const [],
     this.snoozeLimit = 5,
+    this.changeableSnoozeLimit=5,
     this.snoozeInterval = 10,
     this.couldBeSnoozed = false,
     this.isEnabled = true,
@@ -65,6 +66,7 @@ class AlarmSettings {
       repeatingDays:
       (json['repeatingDays'] as List<dynamic>?)?.cast<int>() ?? [],
       snoozeLimit: json['snoozeLimit'] as int? ?? 5,
+      changeableSnoozeLimit:json['changeableSnoozeLimit'] as int? ??5,
       snoozeInterval: json['snoozeInterval'] as int? ?? 10,
       couldBeSnoozed: json['isSnoozed'] as bool? ?? false,
       isEnabled: json['isEnabled'] as bool? ?? true,
@@ -85,7 +87,11 @@ class AlarmSettings {
   final bool warningNotificationOnKill;
   final bool androidFullScreenIntent;
   final List<int> repeatingDays;
+  ///this value should not be changed during the application
   final int snoozeLimit;
+
+  ///this could be changed during processing
+  final int changeableSnoozeLimit;
   final int snoozeInterval;
   final bool couldBeSnoozed;
   final bool isEnabled;
@@ -112,6 +118,7 @@ class AlarmSettings {
     hash = hash ^ snoozeInterval.hashCode;
     hash = hash ^ couldBeSnoozed.hashCode;
     hash = hash ^ isEnabled.hashCode;
+    hash=hash ^ changeableSnoozeLimit.hashCode;
     hash = hash & 0x3fffffff;
 
     return hash;
@@ -133,6 +140,7 @@ class AlarmSettings {
     bool? androidFullScreenIntent,
     List<int>? repeatingDays,
     int? snoozeLimit,
+    int? changeableSnoozeLimit,
     int? snoozeInterval,
     bool? isSnoozed,
     bool? isEnabled,
@@ -155,6 +163,7 @@ class AlarmSettings {
       androidFullScreenIntent ?? this.androidFullScreenIntent,
       repeatingDays: repeatingDays ?? this.repeatingDays,
       snoozeLimit: snoozeLimit ?? this.snoozeLimit,
+      changeableSnoozeLimit:changeableSnoozeLimit??this.changeableSnoozeLimit,
       snoozeInterval: snoozeInterval ?? this.snoozeInterval,
       couldBeSnoozed: isSnoozed ?? this.couldBeSnoozed,
       isEnabled: isEnabled ?? this.isEnabled,
@@ -177,6 +186,7 @@ class AlarmSettings {
     'androidFullScreenIntent': androidFullScreenIntent,
     'repeatingDays': repeatingDays,
     'snoozeLimit': snoozeLimit,
+    'changeableSnoozeLimit':changeableSnoozeLimit,
     'snoozeInterval': snoozeInterval,
     'isSnoozed': couldBeSnoozed,
     'isEnabled': isEnabled,
