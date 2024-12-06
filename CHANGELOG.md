@@ -1,3 +1,9 @@
+## 4.1.1
+* [Android] Show app on lock screen when alarm rings.
+
+## 4.1.0
+* Migrated to Pigeon.
+
 ## 4.0.12
 * [iOS] Fixed `isRinging` method for specific `id`.
 

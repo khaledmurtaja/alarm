@@ -9,7 +9,7 @@ import 'package:alarm_example/widgets/tile.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const version = '4.0.12';
+const version = '4.1.1';
 
 class ExampleAlarmHomeScreen extends StatefulWidget {
   const ExampleAlarmHomeScreen({super.key});
@@ -19,7 +19,8 @@ class ExampleAlarmHomeScreen extends StatefulWidget {
 }
 
 class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
-  late List<AlarmSettings> alarms;
+  List<AlarmSettings> alarms = [];
+
   static StreamSubscription<AlarmSettings>? ringSubscription;
   static StreamSubscription<int>? updateSubscription;
 
@@ -30,17 +31,18 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
     if (Alarm.android) {
       AlarmPermissions.checkAndroidScheduleExactAlarmPermission();
     }
-    loadAlarms();
+    unawaited(loadAlarms());
     ringSubscription ??= Alarm.ringStream.stream.listen(navigateToRingScreen);
     updateSubscription ??= Alarm.updateStream.stream.listen((_) {
-      loadAlarms();
+      unawaited(loadAlarms());
     });
   }
 
-  void loadAlarms() {
+  Future<void> loadAlarms() async {
+    final updatedAlarms = await Alarm.getAlarms();
+    updatedAlarms.sort((a, b) => a.dateTime.isBefore(b.dateTime) ? 0 : 1);
     setState(() {
-      alarms = Alarm.getAlarms();
-      alarms.sort((a, b) => a.dateTime.isBefore(b.dateTime) ? 0 : 1);
+      alarms = updatedAlarms;
     });
   }
 
@@ -52,7 +54,7 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
             ExampleAlarmRingScreen(alarmSettings: alarmSettings),
       ),
     );
-    loadAlarms();
+    unawaited(loadAlarms());
   }
 
   Future<void> navigateToAlarmScreen(AlarmSettings? settings) async {
@@ -70,7 +72,7 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
       },
     );
 
-    if (res != null && res == true) loadAlarms();
+    if (res != null && res == true) unawaited(loadAlarms());
   }
 
   Future<void> launchReadmeUrl() async {
