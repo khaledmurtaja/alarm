@@ -18,7 +18,7 @@ class AlarmSettings {
     this.warningNotificationOnKill = true,
     this.androidFullScreenIntent = true,
     this.repeatingDays = const [],
-    this.missions=const [],
+    this.mission,
     this.snoozeLimit = 5,
     this.changeableSnoozeLimit=5,
     this.snoozeInterval = 10,
@@ -90,7 +90,7 @@ class AlarmSettings {
   final List<int> repeatingDays;
 
   ///missions before turning the alarm off
-  final List<int> missions;
+  final int? mission;
   ///this value should not be changed during the application
   final int snoozeLimit;
 
@@ -121,7 +121,7 @@ class AlarmSettings {
     hash = hash ^ snoozeLimit.hashCode;
     hash = hash ^ snoozeInterval.hashCode;
     hash = hash ^ couldBeSnoozed.hashCode;
-    hash=hash ^ missions.hashCode;
+    hash=hash ^ mission.hashCode;
     hash = hash ^ isEnabled.hashCode;
     hash=hash ^ changeableSnoozeLimit.hashCode;
     hash = hash & 0x3fffffff;
@@ -144,7 +144,7 @@ class AlarmSettings {
     bool? warningNotificationOnKill,
     bool? androidFullScreenIntent,
     List<int>? repeatingDays,
-    List<int>? missions,
+    int? mission,
     int? snoozeLimit,
     int? changeableSnoozeLimit,
     int? snoozeInterval,
@@ -168,7 +168,7 @@ class AlarmSettings {
       androidFullScreenIntent:
       androidFullScreenIntent ?? this.androidFullScreenIntent,
       repeatingDays: repeatingDays ?? this.repeatingDays,
-      missions: missions??this.missions,
+      mission: mission??this.mission,
       snoozeLimit: snoozeLimit ?? this.snoozeLimit,
       changeableSnoozeLimit:changeableSnoozeLimit??this.changeableSnoozeLimit,
       snoozeInterval: snoozeInterval ?? this.snoozeInterval,
@@ -194,7 +194,7 @@ class AlarmSettings {
     'repeatingDays': repeatingDays,
     'snoozeLimit': snoozeLimit,
     'changeableSnoozeLimit':changeableSnoozeLimit,
-    'missions':missions,
+    'missions':mission,
     'snoozeInterval': snoozeInterval,
     'isSnoozed': couldBeSnoozed,
     'isEnabled': isEnabled,
