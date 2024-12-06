@@ -23,14 +23,24 @@ class AlarmSettings {
     this.repeatingDays = const [],
     this.mission,
     this.snoozeLimit = 5,
-    this.changeableSnoozeLimit=5,
+    this.changeableSnoozeLimit = 5,
     this.snoozeInterval = 10,
     this.couldBeSnoozed = false,
     this.isEnabled = true,
   });
 
   /// Converts from wire datatype.
-  AlarmSettings.fromWire(AlarmSettingsWire wire)
+  AlarmSettings.fromWire(
+      AlarmSettingsWire wire,
+      this.title,
+      this.audioName,
+      this.repeatingDays,
+      this.mission,
+      this.snoozeLimit,
+      this.changeableSnoozeLimit,
+      this.snoozeInterval,
+      this.couldBeSnoozed,
+      this.isEnabled)
       : id = wire.id,
         dateTime =
             DateTime.fromMillisecondsSinceEpoch(wire.millisecondsSinceEpoch),
@@ -65,9 +75,9 @@ class AlarmSettings {
     }
 
     final warningNotificationOnKill =
-    json.containsKey('warningNotificationOnKill')
-        ? json['warningNotificationOnKill'] as bool
-        : json['enableNotificationOnKill'] as bool? ?? true;
+        json.containsKey('warningNotificationOnKill')
+            ? json['warningNotificationOnKill'] as bool
+            : json['enableNotificationOnKill'] as bool? ?? true;
 
     return AlarmSettings(
       id: json['id'] as int,
@@ -82,12 +92,11 @@ class AlarmSettings {
       volumeEnforced: json['volumeEnforced'] as bool? ?? false,
       fadeDuration: json['fadeDuration'] as double? ?? 0.0,
       warningNotificationOnKill: warningNotificationOnKill,
-      androidFullScreenIntent:
-      json['androidFullScreenIntent'] as bool? ?? true,
+      androidFullScreenIntent: json['androidFullScreenIntent'] as bool? ?? true,
       repeatingDays:
-      (json['repeatingDays'] as List<dynamic>?)?.cast<int>() ?? [],
+          (json['repeatingDays'] as List<dynamic>?)?.cast<int>() ?? [],
       snoozeLimit: json['snoozeLimit'] as int? ?? 5,
-      changeableSnoozeLimit:json['changeableSnoozeLimit'] as int? ??5,
+      changeableSnoozeLimit: json['changeableSnoozeLimit'] as int? ?? 5,
       snoozeInterval: json['snoozeInterval'] as int? ?? 10,
       couldBeSnoozed: json['isSnoozed'] as bool? ?? false,
       isEnabled: json['isEnabled'] as bool? ?? true,
@@ -111,6 +120,7 @@ class AlarmSettings {
 
   ///missions before turning the alarm off
   final int? mission;
+
   ///this value should not be changed during the application
   final int snoozeLimit;
 
@@ -158,9 +168,9 @@ class AlarmSettings {
     hash = hash ^ snoozeLimit.hashCode;
     hash = hash ^ snoozeInterval.hashCode;
     hash = hash ^ couldBeSnoozed.hashCode;
-    hash=hash ^ mission.hashCode;
+    hash = hash ^ mission.hashCode;
     hash = hash ^ isEnabled.hashCode;
-    hash=hash ^ changeableSnoozeLimit.hashCode;
+    hash = hash ^ changeableSnoozeLimit.hashCode;
     hash = hash & 0x3fffffff;
 
     return hash;
@@ -201,13 +211,14 @@ class AlarmSettings {
       volumeEnforced: volumeEnforced ?? this.volumeEnforced,
       fadeDuration: fadeDuration ?? this.fadeDuration,
       warningNotificationOnKill:
-      warningNotificationOnKill ?? this.warningNotificationOnKill,
+          warningNotificationOnKill ?? this.warningNotificationOnKill,
       androidFullScreenIntent:
-      androidFullScreenIntent ?? this.androidFullScreenIntent,
+          androidFullScreenIntent ?? this.androidFullScreenIntent,
       repeatingDays: repeatingDays ?? this.repeatingDays,
-      mission: mission??this.mission,
+      mission: mission ?? this.mission,
       snoozeLimit: snoozeLimit ?? this.snoozeLimit,
-      changeableSnoozeLimit:changeableSnoozeLimit??this.changeableSnoozeLimit,
+      changeableSnoozeLimit:
+          changeableSnoozeLimit ?? this.changeableSnoozeLimit,
       snoozeInterval: snoozeInterval ?? this.snoozeInterval,
       couldBeSnoozed: isSnoozed ?? this.couldBeSnoozed,
       isEnabled: isEnabled ?? this.isEnabled,
@@ -215,25 +226,25 @@ class AlarmSettings {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'dateTime': dateTime.microsecondsSinceEpoch,
-    'assetAudioPath': assetAudioPath,
-    'audioName': audioName, // Serialize new property.
-    'notificationSettings': notificationSettings.toJson(),
-    'loopAudio': loopAudio,
-    'vibrate': vibrate,
-    'volume': volume,
-    'volumeEnforced': volumeEnforced,
-    'fadeDuration': fadeDuration,
-    'warningNotificationOnKill': warningNotificationOnKill,
-    'androidFullScreenIntent': androidFullScreenIntent,
-    'repeatingDays': repeatingDays,
-    'snoozeLimit': snoozeLimit,
-    'changeableSnoozeLimit':changeableSnoozeLimit,
-    'missions':mission,
-    'snoozeInterval': snoozeInterval,
-    'isSnoozed': couldBeSnoozed,
-    'isEnabled': isEnabled,
-  };
+        'id': id,
+        'title': title,
+        'dateTime': dateTime.microsecondsSinceEpoch,
+        'assetAudioPath': assetAudioPath,
+        'audioName': audioName, // Serialize new property.
+        'notificationSettings': notificationSettings.toJson(),
+        'loopAudio': loopAudio,
+        'vibrate': vibrate,
+        'volume': volume,
+        'volumeEnforced': volumeEnforced,
+        'fadeDuration': fadeDuration,
+        'warningNotificationOnKill': warningNotificationOnKill,
+        'androidFullScreenIntent': androidFullScreenIntent,
+        'repeatingDays': repeatingDays,
+        'snoozeLimit': snoozeLimit,
+        'changeableSnoozeLimit': changeableSnoozeLimit,
+        'missions': mission,
+        'snoozeInterval': snoozeInterval,
+        'isSnoozed': couldBeSnoozed,
+        'isEnabled': isEnabled,
+      };
 }
