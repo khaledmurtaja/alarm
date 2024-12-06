@@ -87,6 +87,7 @@ class AlarmSettings {
       audioName: json['audioName'] as String? ?? '', // Parse new property.
       notificationSettings: notificationSettings,
       loopAudio: json['loopAudio'] as bool? ?? true,
+      mission: json['mission'] as int?,
       vibrate: json['vibrate'] as bool? ?? true,
       volume: json['volume'] as double?,
       volumeEnforced: json['volumeEnforced'] as bool? ?? false,
@@ -242,7 +243,7 @@ class AlarmSettings {
         'repeatingDays': repeatingDays,
         'snoozeLimit': snoozeLimit,
         'changeableSnoozeLimit': changeableSnoozeLimit,
-        'missions': mission,
+        'mission': mission,
         'snoozeInterval': snoozeInterval,
         'isSnoozed': couldBeSnoozed,
         'isEnabled': isEnabled,
