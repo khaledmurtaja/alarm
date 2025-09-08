@@ -73,17 +73,30 @@ class Alarm {
     for (final alarm in alarms) {
       final now = DateTime.now();
       if (alarm.dateTime.isAfter(now)) {
-        await set(alarmSettings: alarm);
+      //  await set(alarmSettings: alarm);
+        print(alarm.isEnabled);
+        if(alarm.isEnabled!=false){
+          await set(alarmSettings: alarm);
+        }else{
+          await AlarmStorage.saveAlarm(alarm);
+        }
       } else {
         if (await Alarm.isRinging(alarm.id)) {
           _ringing.add(_ringing.value.add(alarm));
           ringStream.add(alarm);
         } else {
-          await stop(alarm.id);
+          await disableAlarm(alarm.id);
         }
       }
     }
   }
+
+  /// Stops alarm.
+  static Future<bool> disableAlarm(int id) async {
+    // updateStream.add(id);
+    return iOS ? await IOSAlarm.stopAlarm(id) : await AndroidAlarm.stop(id);
+  }
+
 
   /// Schedules an alarm with given [alarmSettings] with its notification.
   ///
@@ -96,7 +109,7 @@ class Alarm {
 
     for (final alarm in alarms) {
       if (alarm.id == alarmSettings.id ||
-          alarm.dateTime.isSameSecond(alarmSettings.dateTime)) {
+          isSameMinute(alarm.dateTime,alarmSettings.dateTime)) {
         await Alarm.stop(alarm.id);
       }
     }
@@ -114,6 +127,13 @@ class Alarm {
     }
 
     return success;
+  }
+  static bool isSameMinute(DateTime first, DateTime second) {
+    return first.year == second.year &&
+        first.month == second.month &&
+        first.day == second.day &&
+        first.hour == second.hour &&
+        first.minute == second.minute;
   }
 
   /// Validates [alarmSettings] fields.

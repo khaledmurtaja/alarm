@@ -35,6 +35,8 @@ class _ExampleAlarmHomeShortcutButtonState
       id: DateTime.now().millisecondsSinceEpoch % 10000,
       dateTime: dateTime,
       assetAudioPath: 'assets/marimba.mp3',
+      audioName: '',
+      title: '',
       volumeSettings: VolumeSettings.fixed(volume: volume),
       notificationSettings: NotificationSettings(
         title: 'Alarm example',

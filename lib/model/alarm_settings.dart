@@ -13,8 +13,10 @@ class AlarmSettings extends Equatable {
   /// Constructs an instance of `AlarmSettings`.
   const AlarmSettings({
     required this.id,
+    required this.title,
     required this.dateTime,
     required this.assetAudioPath,
+    required this.audioName, // New property for audio name.
     required this.volumeSettings,
     required this.notificationSettings,
     this.loopAudio = true,
@@ -25,6 +27,13 @@ class AlarmSettings extends Equatable {
     this.iOSBackgroundAudio = true,
     this.androidStopAlarmOnTermination = true,
     this.payload,
+    this.repeatingDays = const [],
+    this.mission,
+    this.snoozeLimit = 5,
+    this.changeableSnoozeLimit = 5,
+    this.snoozeInterval = 10,
+    this.couldBeSnoozed = false,
+    this.isEnabled = true,
   });
 
   /// Constructs an `AlarmSettings` instance from the given JSON data.
@@ -141,6 +150,8 @@ class AlarmSettings extends Equatable {
   /// on iOS. Defaults to `true`.
   final bool warningNotificationOnKill;
 
+
+
   /// Whether to turn screen on and display full screen notification
   /// when android alarm notification is triggered. Enabled by default.
   ///
@@ -179,6 +190,19 @@ class AlarmSettings extends Equatable {
   ///
   /// Caller is responsible for serializing and parsing the payload.
   final String? payload;
+  final List<int> repeatingDays;
+
+  ///missions before turning the alarm off
+  final int? mission;
+
+  ///this value should not be changed during the application
+  final int snoozeLimit;
+
+  final String audioName; // New property.
+
+  final String title;
+
+
 
   /// Converts the `AlarmSettings` instance to a JSON object.
   Map<String, dynamic> toJson() => _$AlarmSettingsToJson(this);
@@ -199,10 +223,18 @@ class AlarmSettings extends Equatable {
         androidStopAlarmOnTermination: androidStopAlarmOnTermination,
       );
 
+  ///this could be changed during processing
+  final int changeableSnoozeLimit;
+  final int snoozeInterval;
+  final bool couldBeSnoozed;
+  final bool isEnabled;
+
   /// Creates a copy of `AlarmSettings` but with the given fields replaced with
   /// the new values.
   AlarmSettings copyWith({
     int? id,
+    String? title,
+    String? audioName, // Add copyWith for new property.
     DateTime? dateTime,
     String? assetAudioPath,
     VolumeSettings? volumeSettings,
@@ -222,9 +254,18 @@ class AlarmSettings extends Equatable {
     bool? iOSBackgroundAudio,
     bool? androidStopAlarmOnTermination,
     String? Function()? payload,
-  }) {
+    List<int>? repeatingDays,
+    int? mission,
+    int? snoozeLimit,
+    int? changeableSnoozeLimit,
+    int? snoozeInterval,
+    bool? isSnoozed,
+    bool? isEnabled
+  ,}) {
     return AlarmSettings(
       id: id ?? this.id,
+      title: title ?? this.title,
+      audioName: audioName ?? this.audioName, // Handle new property.
       dateTime: dateTime ?? this.dateTime,
       assetAudioPath: assetAudioPath ?? this.assetAudioPath,
       volumeSettings: volumeSettings ?? this.volumeSettings,
@@ -240,6 +281,14 @@ class AlarmSettings extends Equatable {
       androidStopAlarmOnTermination:
           androidStopAlarmOnTermination ?? this.androidStopAlarmOnTermination,
       payload: payload?.call() ?? this.payload,
+      repeatingDays: repeatingDays ?? this.repeatingDays,
+      mission: mission ?? this.mission,
+      snoozeLimit: snoozeLimit ?? this.snoozeLimit,
+      changeableSnoozeLimit:
+      changeableSnoozeLimit ?? this.changeableSnoozeLimit,
+      snoozeInterval: snoozeInterval ?? this.snoozeInterval,
+      couldBeSnoozed: isSnoozed ?? couldBeSnoozed,
+      isEnabled: isEnabled ?? this.isEnabled,
     );
   }
 

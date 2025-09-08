@@ -120,12 +120,14 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
       assetAudioPath: assetAudio,
       volumeSettings: volumeSettings,
       allowAlarmOverlap: true,
+      audioName: '',
       notificationSettings: NotificationSettings(
         title: 'Alarm example',
         body: 'Your alarm ($id) is ringing',
         stopButton: 'Stop the alarm',
         icon: 'notification_icon',
       ),
+      title: '',
     );
     return alarmSettings;
   }

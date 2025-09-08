@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:alarm/src/generated/platform_bindings.g.dart';
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
-
 part 'notification_settings.g.dart';
 
 /// Model for notification settings.
