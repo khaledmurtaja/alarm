@@ -91,10 +91,27 @@ class Alarm {
     }
   }
 
-  /// Stops alarm.
+  // /// Stops alarm.
+  // static Future<bool> disableAlarm(int id) async {
+  //   // updateStream.add(id);
+  //   return iOS ? await IOSAlarm.stopAlarm(id) : await AndroidAlarm.stop(id);
+  // }
+
+  ///disable alarm without removing it from the storage
+  ///
   static Future<bool> disableAlarm(int id) async {
-    // updateStream.add(id);
-    return iOS ? await IOSAlarm.stopAlarm(id) : await AndroidAlarm.stop(id);
+    updateStream.add(id);
+
+    final success =
+    iOS ? await IOSAlarm.stopAlarm(id) : await AndroidAlarm.stop(id);
+
+    if (success) {
+      // remove from in-memory scheduled/ringing lists so it's no longer shown as ringing
+      _scheduled.add(_scheduled.value.removeById(id));
+      _ringing.add(_ringing.value.removeById(id));
+    }
+
+    return success;
   }
 
 
@@ -128,6 +145,7 @@ class Alarm {
 
     return success;
   }
+
   static bool isSameMinute(DateTime first, DateTime second) {
     return first.year == second.year &&
         first.month == second.month &&
