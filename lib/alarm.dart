@@ -89,7 +89,7 @@ class Alarm {
           ringStream.add(alarm);
           print("part4");
         } else {
-          await disableAlarm(alarm.id);
+          await disableAlarm(alarm);
           print("part5");
 
         }
@@ -97,24 +97,24 @@ class Alarm {
     }
   }
 
-  // /// Stops alarm.
-  // static Future<bool> disableAlarm(int id) async {
-  //   // updateStream.add(id);
-  //   return iOS ? await IOSAlarm.stopAlarm(id) : await AndroidAlarm.stop(id);
-  // }
+
 
   ///disable alarm without removing it from the storage
   ///
-  static Future<bool> disableAlarm(int id) async {
-    updateStream.add(id);
+  static Future<bool> disableAlarm(AlarmSettings alarm) async {
+    updateStream.add(alarm.id);
 
     final success =
-    iOS ? await IOSAlarm.stopAlarm(id) : await AndroidAlarm.stop(id);
+    iOS ? await IOSAlarm.stopAlarm(alarm.id) : await AndroidAlarm.stop(alarm.id);
+
+    ///This line to store the alarm again,because stop api has deleted the alarm.
+    ///and we want to just disable it without deletion
+    await AlarmStorage.saveAlarm(alarm);
 
     if (success) {
       // remove from in-memory scheduled/ringing lists so it's no longer shown as ringing
-      _scheduled.add(_scheduled.value.removeById(id));
-      _ringing.add(_ringing.value.removeById(id));
+      _scheduled.add(_scheduled.value.removeById(alarm.id));
+      _ringing.add(_ringing.value.removeById(alarm.id));
     }
 
     return success;
