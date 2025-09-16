@@ -150,8 +150,6 @@ class AlarmSettings extends Equatable {
   /// on iOS. Defaults to `true`.
   final bool warningNotificationOnKill;
 
-
-
   /// Whether to turn screen on and display full screen notification
   /// when android alarm notification is triggered. Enabled by default.
   ///
@@ -201,8 +199,6 @@ class AlarmSettings extends Equatable {
   final String audioName; // New property.
 
   final String title;
-
-
 
   /// Converts the `AlarmSettings` instance to a JSON object.
   Map<String, dynamic> toJson() => _$AlarmSettingsToJson(this);
@@ -260,8 +256,8 @@ class AlarmSettings extends Equatable {
     int? changeableSnoozeLimit,
     int? snoozeInterval,
     bool? isSnoozed,
-    bool? isEnabled
-  ,}) {
+    bool? isEnabled,
+  }) {
     return AlarmSettings(
       id: id ?? this.id,
       title: title ?? this.title,
@@ -285,7 +281,7 @@ class AlarmSettings extends Equatable {
       mission: mission ?? this.mission,
       snoozeLimit: snoozeLimit ?? this.snoozeLimit,
       changeableSnoozeLimit:
-      changeableSnoozeLimit ?? this.changeableSnoozeLimit,
+          changeableSnoozeLimit ?? this.changeableSnoozeLimit,
       snoozeInterval: snoozeInterval ?? this.snoozeInterval,
       couldBeSnoozed: isSnoozed ?? couldBeSnoozed,
       isEnabled: isEnabled ?? this.isEnabled,
@@ -307,5 +303,9 @@ class AlarmSettings extends Equatable {
         iOSBackgroundAudio,
         androidStopAlarmOnTermination,
         payload,
+        isEnabled,
+        title,
+        audioName,
+        repeatingDays,
       ];
 }
