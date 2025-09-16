@@ -74,14 +74,12 @@ class Alarm {
       final now = DateTime.now();
       if (alarm.dateTime.isAfter(now)) {
         print("part1");
-        if(alarm.isEnabled!=false){
+        if (alarm.isEnabled != false) {
           await set(alarmSettings: alarm);
           print("part2");
-
-        }else{
+        } else {
           await AlarmStorage.saveAlarm(alarm);
           print("3");
-
         }
       } else {
         if (await Alarm.isRinging(alarm.id)) {
@@ -91,21 +89,19 @@ class Alarm {
         } else {
           await disableAlarm(alarm);
           print("part5");
-
         }
       }
     }
   }
-
-
 
   ///disable alarm without removing it from the storage
   ///
   static Future<bool> disableAlarm(AlarmSettings alarm) async {
     updateStream.add(alarm.id);
 
-    final success =
-    iOS ? await IOSAlarm.stopAlarm(alarm.id) : await AndroidAlarm.stop(alarm.id);
+    final success = iOS
+        ? await IOSAlarm().stopAlarm(alarm.id)
+        : await AndroidAlarm().stopAlarm(alarm.id);
 
     ///This line to store the alarm again,because stop api has deleted the alarm.
     ///and we want to just disable it without deletion
@@ -120,7 +116,6 @@ class Alarm {
     return success;
   }
 
-
   /// Schedules an alarm with given [alarmSettings] with its notification.
   ///
   /// If you set an alarm for the same dateTime as an existing one,
@@ -132,7 +127,7 @@ class Alarm {
 
     for (final alarm in alarms) {
       if (alarm.id == alarmSettings.id ||
-          isSameMinute(alarm.dateTime,alarmSettings.dateTime)) {
+          isSameMinute(alarm.dateTime, alarmSettings.dateTime)) {
         await Alarm.stop(alarm.id);
       }
     }
