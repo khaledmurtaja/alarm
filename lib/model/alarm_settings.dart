@@ -255,7 +255,7 @@ class AlarmSettings extends Equatable {
     int? snoozeLimit,
     int? changeableSnoozeLimit,
     int? snoozeInterval,
-    bool? isSnoozed,
+    bool? couldBeSnoozed,
     bool? isEnabled,
   }) {
     return AlarmSettings(
@@ -283,7 +283,7 @@ class AlarmSettings extends Equatable {
       changeableSnoozeLimit:
           changeableSnoozeLimit ?? this.changeableSnoozeLimit,
       snoozeInterval: snoozeInterval ?? this.snoozeInterval,
-      couldBeSnoozed: isSnoozed ?? couldBeSnoozed,
+      couldBeSnoozed: couldBeSnoozed ?? this.couldBeSnoozed,
       isEnabled: isEnabled ?? this.isEnabled,
     );
   }
