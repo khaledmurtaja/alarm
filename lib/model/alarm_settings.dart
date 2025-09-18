@@ -307,5 +307,9 @@ class AlarmSettings extends Equatable {
         title,
         audioName,
         repeatingDays,
+        couldBeSnoozed,
+        snoozeLimit,
+        changeableSnoozeLimit,
+        snoozeInterval
       ];
 }
