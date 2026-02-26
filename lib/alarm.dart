@@ -73,22 +73,17 @@ class Alarm {
     for (final alarm in alarms) {
       final now = DateTime.now();
       if (alarm.dateTime.isAfter(now)) {
-        print("part1");
         if (alarm.isEnabled != false) {
           await set(alarmSettings: alarm);
-          print("part2");
         } else {
           await AlarmStorage.saveAlarm(alarm);
-          print("3");
         }
       } else {
         if (await Alarm.isRinging(alarm.id)) {
           _ringing.add(_ringing.value.add(alarm));
           ringStream.add(alarm);
-          print("part4");
         } else {
           await disableAlarm(alarm);
-          print("part5");
         }
       }
     }
