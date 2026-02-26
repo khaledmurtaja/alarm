@@ -28,6 +28,7 @@ data class AlarmSettings(
     val androidFullScreenIntent: Boolean,
     val allowAlarmOverlap: Boolean = false, // Defaults to false for backward compatibility
     val androidStopAlarmOnTermination: Boolean = true, // Defaults to true for backward compatibility
+    val repeatingDays: List<Int> = emptyList(), // ISO weekdays 1-7, empty = one-time
 ) {
     companion object {
         fun fromWire(e: AlarmSettingsWire): AlarmSettings {
@@ -71,6 +72,11 @@ data class AlarmSettings(
             // Handle backward compatibility for `androidStopAlarmOnTermination`
             val androidStopAlarmOnTermination = jsonObject.primitiveBoolean("androidStopAlarmOnTermination") ?: true
 
+            // Handle backward compatibility for `repeatingDays`
+            val repeatingDays = jsonObject["repeatingDays"]?.jsonArray?.mapNotNull {
+                it.jsonPrimitive.intOrNull
+            } ?: emptyList()
+
             // Handle backward compatibility for `volumeSettings`
             val volumeSettings = jsonObject["volumeSettings"]?.let {
                 Json.decodeFromJsonElement(VolumeSettings.serializer(), it)
@@ -100,6 +106,7 @@ data class AlarmSettings(
                 androidFullScreenIntent = androidFullScreenIntent,
                 allowAlarmOverlap = allowAlarmOverlap,
                 androidStopAlarmOnTermination = androidStopAlarmOnTermination,
+                repeatingDays = repeatingDays,
             )
         }
     }

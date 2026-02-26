@@ -83,10 +83,45 @@ class Alarm {
           _ringing.add(_ringing.value.add(alarm));
           ringStream.add(alarm);
         } else {
-          await disableAlarm(alarm);
+          if (alarm.repeatingDays.isNotEmpty && alarm.isEnabled) {
+            // Reschedule repeating alarm to next occurrence
+            final nextDateTime = _computeNextRepeatingDateTime(
+              alarm.dateTime,
+              alarm.repeatingDays,
+            );
+            await set(
+                alarmSettings: alarm.copyWith(dateTime: nextDateTime));
+          } else {
+            await disableAlarm(alarm);
+          }
         }
       }
     }
+  }
+
+  /// Computes the next valid DateTime for a repeating alarm.
+  /// Equivalent to buildAlarmDateTime in the app, kept here to avoid
+  /// circular dependency between the plugin and the app.
+  static DateTime _computeNextRepeatingDateTime(
+    DateTime baseDateTime,
+    List<int> repeatingDays,
+  ) {
+    final now = DateTime.now();
+    var candidate = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      baseDateTime.hour,
+      baseDateTime.minute,
+    );
+    for (int i = 0; i <= 7; i++) {
+      final check = candidate.add(Duration(days: i));
+      if (repeatingDays.contains(check.weekday) && check.isAfter(now)) {
+        return check;
+      }
+    }
+    // Fallback: tomorrow same time
+    return candidate.add(const Duration(days: 1));
   }
 
   ///disable alarm without removing it from the storage
