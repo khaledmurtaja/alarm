@@ -310,6 +310,7 @@ class AlarmSettings extends Equatable {
         couldBeSnoozed,
         snoozeLimit,
         changeableSnoozeLimit,
-        snoozeInterval
+        snoozeInterval,
+        mission
       ];
 }
