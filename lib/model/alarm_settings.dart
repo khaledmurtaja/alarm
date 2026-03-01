@@ -251,7 +251,7 @@ class AlarmSettings extends Equatable {
     bool? androidStopAlarmOnTermination,
     String? Function()? payload,
     List<int>? repeatingDays,
-    int? mission,
+    int? Function()? mission,
     int? snoozeLimit,
     int? changeableSnoozeLimit,
     int? snoozeInterval,
@@ -278,7 +278,7 @@ class AlarmSettings extends Equatable {
           androidStopAlarmOnTermination ?? this.androidStopAlarmOnTermination,
       payload: payload?.call() ?? this.payload,
       repeatingDays: repeatingDays ?? this.repeatingDays,
-      mission: mission ?? this.mission,
+      mission: mission != null ? mission.call() : this.mission,
       snoozeLimit: snoozeLimit ?? this.snoozeLimit,
       changeableSnoozeLimit:
           changeableSnoozeLimit ?? this.changeableSnoozeLimit,
