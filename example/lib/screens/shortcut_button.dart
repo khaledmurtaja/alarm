@@ -41,7 +41,8 @@ class _ExampleAlarmHomeShortcutButtonState
         body: 'Shortcut button alarm with delay of $delayInHours hours',
         icon: 'notification_icon',
       ),
-      warningNotificationOnKill: Platform.isIOS,
+      warningNotificationOnKill: Platform.isIOS, title: '', assetAudioPath: '',
+      audioName: '',
     );
 
     await Alarm.set(alarmSettings: alarmSettings);

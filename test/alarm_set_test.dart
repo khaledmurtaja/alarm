@@ -11,7 +11,7 @@ void main() {
       notificationSettings: const NotificationSettings(
         title: 'Title',
         body: 'Body',
-      ),
+      ), title: '', assetAudioPath: '', audioName: '',
     );
   }
 
