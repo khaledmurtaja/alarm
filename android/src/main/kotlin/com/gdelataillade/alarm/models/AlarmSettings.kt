@@ -35,20 +35,20 @@ data class AlarmSettings(
     companion object {
         fun fromWire(e: AlarmSettingsWire): AlarmSettings {
             return AlarmSettings(
-                e.id.toInt(),
-                Date(e.millisecondsSinceEpoch),
-                e.assetAudioPath,
-                VolumeSettings.fromWire(e.volumeSettings),
-                NotificationSettings.fromWire(e.notificationSettings),
-                e.loopAudio,
-                e.vibrate,
-                e.warningNotificationOnKill,
-                e.androidFullScreenIntent,
-                e.allowAlarmOverlap,
-                e.allowSameSecondScheduling,
-                e.androidStopAlarmOnTermination,
-                e.repeatingDays,
-                e.preferConnectedAudioDevice,
+                id = e.id.toInt(),
+                dateTime = Date(e.millisecondsSinceEpoch),
+                assetAudioPath = e.assetAudioPath,
+                volumeSettings = VolumeSettings.fromWire(e.volumeSettings),
+                notificationSettings = NotificationSettings.fromWire(e.notificationSettings),
+                loopAudio = e.loopAudio,
+                vibrate = e.vibrate,
+                warningNotificationOnKill = e.warningNotificationOnKill,
+                androidFullScreenIntent = e.androidFullScreenIntent,
+                allowAlarmOverlap = e.allowAlarmOverlap,
+                allowSameSecondScheduling = e.allowSameSecondScheduling,
+                androidStopAlarmOnTermination = e.androidStopAlarmOnTermination,
+                repeatingDays = e.repeatingDays.map { it.toInt() }, // if present on the wire type
+                preferConnectedAudioDevice = e.preferConnectedAudioDevice,
             )
         }
 
