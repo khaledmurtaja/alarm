@@ -47,6 +47,7 @@ data class AlarmSettings(
                 e.allowAlarmOverlap,
                 e.allowSameSecondScheduling,
                 e.androidStopAlarmOnTermination,
+                e.repeatingDays,
                 e.preferConnectedAudioDevice,
             )
         }
