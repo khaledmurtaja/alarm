@@ -38,6 +38,14 @@ class NotificationHandler(private val context: Context) {
         }
     }
 
+    // Dismisses the alarm notification when no foreground service owns it
+    // (a live service removes it via stopForeground(STOP_FOREGROUND_REMOVE)).
+    fun cancelNotification(id: Int) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(id)
+    }
+
     // We need to use [Resources.getIdentifier] because resources are registered by Flutter.
     @SuppressLint("DiscouragedApi")
     fun buildNotification(
@@ -64,9 +72,12 @@ class NotificationHandler(private val context: Context) {
             action = AlarmReceiver.ACTION_ALARM_STOP
             putExtra("id", alarmId)
         }
+        // Use the alarm id as request code so each alarm gets its own pending
+        // intent; with a shared request code the stop button of one alarm
+        // would stop whichever alarm was scheduled last.
         val stopPendingIntent = PendingIntent.getBroadcast(
             context,
-            0,
+            alarmId,
             stopIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

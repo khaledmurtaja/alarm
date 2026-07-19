@@ -16,7 +16,8 @@ AlarmSettings _$AlarmSettingsFromJson(Map<String, dynamic> json) =>
           title: $checkedConvert('title', (v) => v as String),
           dateTime:
               $checkedConvert('dateTime', (v) => DateTime.parse(v as String)),
-          assetAudioPath: $checkedConvert('assetAudioPath', (v) => v as String),
+          assetAudioPath:
+              $checkedConvert('assetAudioPath', (v) => v as String?),
           audioName: $checkedConvert('audioName', (v) => v as String),
           volumeSettings: $checkedConvert('volumeSettings',
               (v) => VolumeSettings.fromJson(v as Map<String, dynamic>)),
@@ -30,10 +31,14 @@ AlarmSettings _$AlarmSettingsFromJson(Map<String, dynamic> json) =>
               'androidFullScreenIntent', (v) => v as bool? ?? true),
           allowAlarmOverlap:
               $checkedConvert('allowAlarmOverlap', (v) => v as bool? ?? false),
+          allowSameSecondScheduling: $checkedConvert('allowSameSecondScheduling',
+              (v) => v as bool? ?? false),
           iOSBackgroundAudio:
               $checkedConvert('iOSBackgroundAudio', (v) => v as bool? ?? true),
           androidStopAlarmOnTermination: $checkedConvert(
               'androidStopAlarmOnTermination', (v) => v as bool? ?? true),
+          preferConnectedAudioDevice: $checkedConvert(
+              'preferConnectedAudioDevice', (v) => v as bool? ?? false),
           payload: $checkedConvert('payload', (v) => v as String?),
           repeatingDays: $checkedConvert(
               'repeatingDays',
@@ -61,7 +66,7 @@ Map<String, dynamic> _$AlarmSettingsToJson(AlarmSettings instance) =>
     <String, dynamic>{
       'id': instance.id,
       'dateTime': instance.dateTime.toIso8601String(),
-      'assetAudioPath': instance.assetAudioPath,
+      if (instance.assetAudioPath case final value?) 'assetAudioPath': value,
       'volumeSettings': instance.volumeSettings.toJson(),
       'notificationSettings': instance.notificationSettings.toJson(),
       'loopAudio': instance.loopAudio,
@@ -69,8 +74,10 @@ Map<String, dynamic> _$AlarmSettingsToJson(AlarmSettings instance) =>
       'warningNotificationOnKill': instance.warningNotificationOnKill,
       'androidFullScreenIntent': instance.androidFullScreenIntent,
       'allowAlarmOverlap': instance.allowAlarmOverlap,
+      'allowSameSecondScheduling': instance.allowSameSecondScheduling,
       'iOSBackgroundAudio': instance.iOSBackgroundAudio,
       'androidStopAlarmOnTermination': instance.androidStopAlarmOnTermination,
+      'preferConnectedAudioDevice': instance.preferConnectedAudioDevice,
       if (instance.payload case final value?) 'payload': value,
       'repeatingDays': instance.repeatingDays,
       if (instance.mission case final value?) 'mission': value,

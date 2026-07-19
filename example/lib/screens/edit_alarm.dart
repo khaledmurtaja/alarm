@@ -1,4 +1,5 @@
 import 'package:alarm/alarm.dart';
+import 'package:alarm/utils/alarm_exception.dart';
 import 'package:flutter/material.dart';
 
 class ExampleAlarmEditScreen extends StatefulWidget {
@@ -20,7 +21,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
   late double? volume;
   late Duration? fadeDuration;
   late bool staircaseFade;
-  late String assetAudio;
+  late String? assetAudio;
 
   @override
   void initState() {
@@ -35,7 +36,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
       volume = null;
       fadeDuration = null;
       staircaseFade = false;
-      assetAudio = 'assets/marimba.mp3';
+      assetAudio = null;
     } else {
       selectedDateTime = widget.alarmSettings!.dateTime;
       loopAudio = widget.alarmSettings!.loopAudio;
@@ -126,25 +127,33 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
         body: 'Your alarm ($id) is ringing',
         stopButton: 'Stop the alarm',
         icon: 'notification_icon',
+        keepNotificationAfterAlarmEnds: true,
       ),
       title: '',
     );
     return alarmSettings;
   }
 
-  void saveAlarm() {
+  Future<void> saveAlarm() async {
     if (loading) return;
     setState(() => loading = true);
-    Alarm.set(alarmSettings: buildAlarmSettings()).then((res) {
+    try {
+      final res = await Alarm.set(alarmSettings: buildAlarmSettings());
       if (res && mounted) Navigator.pop(context, true);
-      setState(() => loading = false);
-    });
+    } on AlarmException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to set alarm: ${e.message}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
   }
 
-  void deleteAlarm() {
-    Alarm.stop(widget.alarmSettings!.id).then((res) {
-      if (res && mounted) Navigator.pop(context, true);
-    });
+  Future<void> deleteAlarm() async {
+    final res = await Alarm.stop(widget.alarmSettings!.id);
+    if (res && mounted) Navigator.pop(context, true);
   }
 
   @override
@@ -235,31 +244,34 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                 'Sound',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              DropdownButton(
+              DropdownButton<String?>(
                 value: assetAudio,
                 items: const [
-                  DropdownMenuItem<String>(
+                  DropdownMenuItem<String?>(
+                    child: Text('Default'),
+                  ),
+                  DropdownMenuItem<String?>(
                     value: 'assets/marimba.mp3',
                     child: Text('Marimba'),
                   ),
-                  DropdownMenuItem<String>(
+                  DropdownMenuItem<String?>(
                     value: 'assets/nokia.mp3',
                     child: Text('Nokia'),
                   ),
-                  DropdownMenuItem<String>(
+                  DropdownMenuItem<String?>(
                     value: 'assets/mozart.mp3',
                     child: Text('Mozart'),
                   ),
-                  DropdownMenuItem<String>(
+                  DropdownMenuItem<String?>(
                     value: 'assets/star_wars.mp3',
                     child: Text('Star Wars'),
                   ),
-                  DropdownMenuItem<String>(
+                  DropdownMenuItem<String?>(
                     value: 'assets/one_piece.mp3',
                     child: Text('One Piece'),
                   ),
                 ],
-                onChanged: (value) => setState(() => assetAudio = value!),
+                onChanged: (value) => setState(() => assetAudio = value),
               ),
             ],
           ),

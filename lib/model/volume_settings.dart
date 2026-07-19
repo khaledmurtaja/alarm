@@ -13,22 +13,25 @@ class VolumeSettings extends Equatable {
     this.fadeDuration,
     this.fadeSteps = const [],
     this.volumeEnforced = false,
+    this.showSystemUI = true,
   })  : assert(
           volume == null || (volume >= 0 && volume <= 1),
           'volume must be NULL or in the range [0, 1]',
         ),
         assert(
           fadeDuration == null || fadeDuration > Duration.zero,
-          'fadeDuration must be NULL or stricly positive',
+          'fadeDuration must be NULL or strictly positive',
         );
 
   /// Constructs [VolumeSettings] with fixed volume level.
   const VolumeSettings.fixed({
     double? volume,
     bool volumeEnforced = false,
+    bool showSystemUI = true,
   }) : this._(
           volume: volume,
           volumeEnforced: volumeEnforced,
+          showSystemUI: showSystemUI,
         );
 
   /// Constructs [VolumeSettings] with fading volume level.
@@ -36,10 +39,12 @@ class VolumeSettings extends Equatable {
     required Duration fadeDuration,
     double? volume,
     bool volumeEnforced = false,
+    bool showSystemUI = true,
   }) : this._(
           volume: volume,
           fadeDuration: fadeDuration,
           volumeEnforced: volumeEnforced,
+          showSystemUI: showSystemUI,
         );
 
   /// Constructs [VolumeSettings] with slowly increasing (stepped) volume level.
@@ -47,12 +52,23 @@ class VolumeSettings extends Equatable {
     required List<VolumeFadeStep> fadeSteps,
     double? volume,
     bool volumeEnforced = false,
+    bool showSystemUI = true,
   }) {
     assert(fadeSteps.isNotEmpty, 'fadeSteps must not be empty');
+    assert(
+      () {
+        for (var i = 1; i < fadeSteps.length; i++) {
+          if (fadeSteps[i].time <= fadeSteps[i - 1].time) return false;
+        }
+        return true;
+      }(),
+      'fadeSteps must be sorted by strictly increasing time',
+    );
     return VolumeSettings._(
       volume: volume,
       fadeSteps: fadeSteps,
       volumeEnforced: volumeEnforced,
+      showSystemUI: showSystemUI,
     );
   }
 
@@ -63,9 +79,9 @@ class VolumeSettings extends Equatable {
   /// Specifies the system volume level to be set when the alarm goes off.
   ///
   /// Accepts a value between 0 (mute) and 1 (maximum volume).
-  /// When the alarm is triggered,, the system volume adjusts to this specified
-  /// specified level. Upon stopping the alarm, the system volume reverts to its
-  /// prior setting.
+  /// When the alarm is triggered, the system volume adjusts to this
+  /// specified level. Upon stopping the alarm, the system volume reverts to
+  /// its prior setting.
   ///
   /// If left unspecified or set to `null`, the current system volume
   /// at the time of the alarm will be used.
@@ -95,6 +111,12 @@ class VolumeSettings extends Equatable {
   /// Defaults to false.
   final bool volumeEnforced;
 
+  /// If true, the system volume bar is shown when the alarm sets or restores
+  /// the volume. Set to false to suppress the volume UI entirely.
+  ///
+  /// Defaults to true.
+  final bool showSystemUI;
+
   /// Converts the [VolumeSettings] instance to a JSON object.
   Map<String, dynamic> toJson() => _$VolumeSettingsToJson(this);
 
@@ -104,10 +126,12 @@ class VolumeSettings extends Equatable {
         fadeDurationMillis: fadeDuration?.inMilliseconds,
         fadeSteps: fadeSteps.map((e) => e.toWire()).toList(),
         volumeEnforced: volumeEnforced,
+        showSystemUI: showSystemUI,
       );
 
   @override
-  List<Object?> get props => [volume, fadeDuration, fadeSteps, volumeEnforced];
+  List<Object?> get props =>
+      [volume, fadeDuration, fadeSteps, volumeEnforced, showSystemUI];
 }
 
 /// Represents a step in a volume fade sequence.

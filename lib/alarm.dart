@@ -1,4 +1,4 @@
-// Ignoring deperecated member use for backwards compatibility.
+// Ignoring deprecated member use for backwards compatibility.
 // ignore_for_file: deprecated_member_use_from_same_package
 
 import 'dart:async';
@@ -41,12 +41,18 @@ class Alarm {
   static ValueStream<AlarmSet> get ringing => _ringing.stream;
 
   /// Stream of the alarm updates.
+  ///
+  /// Uses a broadcast controller so events are not buffered when no client
+  /// is listening.
   @Deprecated('Use [scheduled] and [ringing] streams instead.')
-  static final updateStream = StreamController<int>();
+  static final updateStream = StreamController<int>.broadcast();
 
   /// Stream of the ringing status.
+  ///
+  /// Uses a broadcast controller so events are not buffered when no client
+  /// is listening.
   @Deprecated('Use [scheduled] and [ringing] streams instead.')
-  static final ringStream = StreamController<AlarmSettings>();
+  static final ringStream = StreamController<AlarmSettings>.broadcast();
 
   /// Initializes Alarm services.
   ///
@@ -79,7 +85,13 @@ class Alarm {
           await AlarmStorage.saveAlarm(alarm);
         }
       } else {
-        if (await Alarm.isRinging(alarm.id)) {
+        // Query the platform directly instead of [isRinging] because the
+        // ringing stream is not populated yet at this point, which would
+        // trigger the defensive consistency logs for no reason.
+        final isRinging = iOS
+            ? await IOSAlarm().isRinging(alarm.id)
+            : await AndroidAlarm().isRinging(alarm.id);
+        if (isRinging) {
           _ringing.add(_ringing.value.add(alarm));
           ringStream.add(alarm);
         } else {
@@ -156,8 +168,12 @@ class Alarm {
     final alarms = await getAlarms();
 
     for (final alarm in alarms) {
-      if (alarm.id == alarmSettings.id ||
-          isSameMinute(alarm.dateTime, alarmSettings.dateTime)) {
+      final sameId = alarm.id == alarmSettings.id;
+      final sameSecond = alarm.dateTime.isSameSecond(alarmSettings.dateTime);
+      final shouldReplaceSameSecond =
+          sameSecond && !alarmSettings.allowSameSecondScheduling;
+
+      if (sameId || shouldReplaceSameSecond) {
         await Alarm.stop(alarm.id);
       }
     }

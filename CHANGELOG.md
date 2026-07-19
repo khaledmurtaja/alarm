@@ -1,3 +1,35 @@
+## 5.6.0
+* [Android] Added support for Android Gradle Plugin 9, while keeping AGP 8 compatibility.
+* [Android] Fixed several alarm scheduling, foreground service, and audio playback crashes.
+* [Android] Stop actions now dismiss the alarm notification when the alarm service is not running.
+* [iOS] Fixed alarm timing precision, volume fades, and background refresh scheduling.
+* [iOS] Migrated the example app from CocoaPods to Swift Package Manager.
+* Fixed `AlarmSettings.copyWith` not clearing `payload`, and a debug-mode assert in `NotificationSettings.copyWith`; deprecated legacy `copyWith` parameters that were silently ignored.
+* Fixed the v4 → v5 migration misparsing `fadeDuration`.
+* Added a Dart unit test suite, now run in CI.
+
+## 5.5.0
+* [iOS] Added Swift Package Manager support.
+* Added `AlarmSettings.allowSameSecondScheduling` to allow multiple alarms to ring in the same second.
+* **Requires Flutter 3.41.0 or later.** Older Flutter projects will continue to resolve to 5.4.1.
+
+## 5.4.1
+* [Android] Added `AlarmSettings.preferConnectedAudioDevice` to route alarm audio through connected earphones or Bluetooth.
+* [Android] Fixed `androidStopAlarmOnTermination` not persisting across app restarts.
+
+## 5.4.0
+* [Android] Added `VolumeSettings.showSystemUI` to suppress the system volume bar when the alarm sets or restores volume.
+
+## 5.3.0
+* [Android] Route alarm audio through the alarm volume stream so it responds to the alarm slider instead of media volume.
+
+## 5.2.1
+* [iOS] Added `NotificationSettings.keepNotificationAfterAlarmEnds` to control whether the notification should stay after alarm ends or not.
+
+## 5.2.0
+* Using device's default alarm sound when `assetAudioPath` is null.
+* [Android] Added support for Android Gradle Plugin 8.
+
 ## 5.1.5
 * [Android] Fixed stream not firing.
 
@@ -12,7 +44,7 @@
 * Updated `AlarmSettings.assetAudioPath` documentation.
 
 ## 5.1.1
-* [Android] Add icon color parameter for notification.
+* [Android] Added icon color parameter for notification.
 
 ## 5.1.0
 * [iOS] Added native refactoring to fix alarm that didn't ring.

@@ -19,7 +19,7 @@ data class AlarmSettings(
     val id: Int,
     @Serializable(with = DateSerializer::class)
     val dateTime: Date,
-    val assetAudioPath: String,
+    val assetAudioPath: String?, // Null means use device default alarm sound
     val volumeSettings: VolumeSettings,
     val notificationSettings: NotificationSettings,
     val loopAudio: Boolean,
@@ -27,8 +27,10 @@ data class AlarmSettings(
     val warningNotificationOnKill: Boolean,
     val androidFullScreenIntent: Boolean,
     val allowAlarmOverlap: Boolean = false, // Defaults to false for backward compatibility
+    val allowSameSecondScheduling: Boolean = false, // Defaults to false for backward compatibility
     val androidStopAlarmOnTermination: Boolean = true, // Defaults to true for backward compatibility
     val repeatingDays: List<Int> = emptyList(), // ISO weekdays 1-7, empty = one-time
+    val preferConnectedAudioDevice: Boolean = false, // Defaults to false for backward compatibility
 ) {
     companion object {
         fun fromWire(e: AlarmSettingsWire): AlarmSettings {
@@ -43,7 +45,9 @@ data class AlarmSettings(
                 e.warningNotificationOnKill,
                 e.androidFullScreenIntent,
                 e.allowAlarmOverlap,
+                e.allowSameSecondScheduling,
                 e.androidStopAlarmOnTermination,
+                e.preferConnectedAudioDevice,
             )
         }
 
@@ -55,7 +59,7 @@ data class AlarmSettings(
 
             val id = jsonObject.primitiveInt("id") ?: throw SerializationException("Missing 'id'")
             val dateTimeMillis = jsonObject.primitiveLong("dateTime") ?: throw SerializationException("Missing 'dateTime'")
-            val assetAudioPath = jsonObject.primitiveString("assetAudioPath") ?: throw SerializationException("Missing 'assetAudioPath'")
+            val assetAudioPath = jsonObject.primitiveString("assetAudioPath") // Can be null to use device default
             val notificationSettings = jsonObject["notificationSettings"]?.let {
                 Json.decodeFromJsonElement(NotificationSettings.serializer(), it)
             } ?: throw SerializationException("Missing 'notificationSettings'")
@@ -69,8 +73,14 @@ data class AlarmSettings(
             // Handle backward compatibility for `allowAlarmOverlap`
             val allowAlarmOverlap = jsonObject.primitiveBoolean("allowAlarmOverlap") ?: false
 
+            // Handle backward compatibility for `allowSameSecondScheduling`
+            val allowSameSecondScheduling = jsonObject.primitiveBoolean("allowSameSecondScheduling") ?: false
+
             // Handle backward compatibility for `androidStopAlarmOnTermination`
             val androidStopAlarmOnTermination = jsonObject.primitiveBoolean("androidStopAlarmOnTermination") ?: true
+
+            // Handle backward compatibility for `preferConnectedAudioDevice`
+            val preferConnectedAudioDevice = jsonObject.primitiveBoolean("preferConnectedAudioDevice") ?: false
 
             // Handle backward compatibility for `repeatingDays`
             val repeatingDays = jsonObject["repeatingDays"]?.jsonArray?.mapNotNull {
@@ -90,7 +100,8 @@ data class AlarmSettings(
                     volume = volume,
                     fadeDuration = fadeDuration?.toKotlinDuration(),
                     fadeSteps = emptyList(), // No equivalent for older models
-                    volumeEnforced = volumeEnforced
+                    volumeEnforced = volumeEnforced,
+                    showSystemUI = true
                 )
             }
 
@@ -105,7 +116,9 @@ data class AlarmSettings(
                 warningNotificationOnKill = warningNotificationOnKill,
                 androidFullScreenIntent = androidFullScreenIntent,
                 allowAlarmOverlap = allowAlarmOverlap,
+                allowSameSecondScheduling = allowSameSecondScheduling,
                 androidStopAlarmOnTermination = androidStopAlarmOnTermination,
+                preferConnectedAudioDevice = preferConnectedAudioDevice,
                 repeatingDays = repeatingDays,
             )
         }

@@ -24,8 +24,10 @@ class AlarmSettings extends Equatable {
     this.warningNotificationOnKill = true,
     this.androidFullScreenIntent = true,
     this.allowAlarmOverlap = false,
+    this.allowSameSecondScheduling = false,
     this.iOSBackgroundAudio = true,
     this.androidStopAlarmOnTermination = true,
+    this.preferConnectedAudioDevice = false,
     this.payload,
     this.repeatingDays = const [],
     this.mission,
@@ -49,21 +51,26 @@ class AlarmSettings extends Equatable {
 
       final volume = (json['volume'] as num?)?.toDouble();
       final fadeDurationSeconds = (json['fadeDuration'] as num?)?.toDouble();
-      final fadeDurationMillis =
+      // The generated VolumeSettings parser reads durations in microseconds.
+      final fadeDurationMicros =
           (fadeDurationSeconds != null && fadeDurationSeconds > 0)
-              ? (fadeDurationSeconds * 1000).toInt()
+              ? (fadeDurationSeconds * Duration.microsecondsPerSecond).toInt()
               : null;
       final volumeEnforced = json['volumeEnforced'] as bool? ?? false;
 
       json['volumeSettings'] = {
         'volume': volume,
-        'fadeDuration': fadeDurationMillis,
+        'fadeDuration': fadeDurationMicros,
         'fadeSteps': <Map<String, dynamic>>[],
         'volumeEnforced': volumeEnforced,
       };
 
       // Default `allowAlarmOverlap` to false for v4
       json['allowAlarmOverlap'] = json['allowAlarmOverlap'] ?? false;
+
+      // Default `allowSameSecondScheduling` to false for v4
+      json['allowSameSecondScheduling'] =
+          json['allowSameSecondScheduling'] ?? false;
 
       // Default `iOSBackgroundAudio` to true for v4
       json['iOSBackgroundAudio'] = json['iOSBackgroundAudio'] ?? true;
@@ -100,7 +107,11 @@ class AlarmSettings extends Equatable {
   /// Date and time when the alarm will be triggered.
   final DateTime dateTime;
 
-  /// Path to audio asset to be used as the alarm ringtone. Accepted formats:
+  /// Path to audio asset to be used as the alarm ringtone.
+  ///
+  /// If `null`, the device's default alarm sound will be used.
+  ///
+  /// Accepted formats:
   ///
   /// * **Project asset**:
   ///   Specifies an asset bundled with your Flutter project.
@@ -123,7 +134,7 @@ class AlarmSettings extends Equatable {
   ///
   /// Note: For Android, the READ_EXTERNAL_STORAGE permission is required in
   /// your `AndroidManifest.xml` to access files from local storage.
-  final String assetAudioPath;
+  final String? assetAudioPath;
 
   /// Settings for the alarm volume.
   final VolumeSettings volumeSettings;
@@ -164,6 +175,14 @@ class AlarmSettings extends Equatable {
   /// Defaults to `false`.
   final bool allowAlarmOverlap;
 
+  /// Whether multiple alarms with different ids can be scheduled for the same
+  /// second. When `false` (default), a new alarm scheduled for the same second
+  /// as an existing one will replace it. When `true`, alarms with different ids
+  /// can coexist even if they share the same second.
+  ///
+  /// Defaults to `false`.
+  final bool allowSameSecondScheduling;
+
   /// iOS apps are killed if they remain inactive in the background. Android
   /// does not have this limitation due to native AlarmManager support.
   ///
@@ -182,6 +201,18 @@ class AlarmSettings extends Equatable {
   ///
   /// Defaults to `true`. Has no effect on iOS.
   final bool androidStopAlarmOnTermination;
+
+  /// If true, alarm audio routes to a connected earphone or Bluetooth device
+  /// when one is present, falling back to the built-in speaker if not.
+  /// Uses `STREAM_MUSIC` and `USAGE_MEDIA` instead of `STREAM_ALARM` and
+  /// `USAGE_ALARM`, so the media volume slider controls the volume instead
+  /// of the alarm slider.
+  ///
+  /// If false (default), audio is always forced to the built-in speaker
+  /// via `USAGE_ALARM`, and the alarm volume slider applies.
+  ///
+  /// Has no effect on iOS. Defaults to `false`.
+  final bool preferConnectedAudioDevice;
 
   /// Optional payload to be sent with the alarm. This can be used to pass
   /// additional data to the alarm handler.
@@ -215,8 +246,10 @@ class AlarmSettings extends Equatable {
         warningNotificationOnKill: warningNotificationOnKill,
         androidFullScreenIntent: androidFullScreenIntent,
         allowAlarmOverlap: allowAlarmOverlap,
+        allowSameSecondScheduling: allowSameSecondScheduling,
         iOSBackgroundAudio: iOSBackgroundAudio,
         androidStopAlarmOnTermination: androidStopAlarmOnTermination,
+        preferConnectedAudioDevice: preferConnectedAudioDevice,
       );
 
   ///this could be changed during processing
@@ -237,18 +270,27 @@ class AlarmSettings extends Equatable {
     NotificationSettings? notificationSettings,
     bool? loopAudio,
     bool? vibrate,
+    @Deprecated('This parameter is ignored. Use volumeSettings instead.')
     double? volume,
+    @Deprecated('This parameter is ignored. Use volumeSettings instead.')
     bool? volumeEnforced,
+    @Deprecated('This parameter is ignored. Use volumeSettings instead.')
     double? fadeDuration,
+    @Deprecated('This parameter is ignored. Use volumeSettings instead.')
     List<double>? fadeStopTimes,
+    @Deprecated('This parameter is ignored. Use volumeSettings instead.')
     List<double>? fadeStopVolumes,
+    @Deprecated('This parameter is ignored. Use notificationSettings instead.')
     String? notificationTitle,
+    @Deprecated('This parameter is ignored. Use notificationSettings instead.')
     String? notificationBody,
     bool? warningNotificationOnKill,
     bool? androidFullScreenIntent,
     bool? allowAlarmOverlap,
+    bool? allowSameSecondScheduling,
     bool? iOSBackgroundAudio,
     bool? androidStopAlarmOnTermination,
+    bool? preferConnectedAudioDevice,
     String? Function()? payload,
     List<int>? repeatingDays,
     int? Function()? mission,
@@ -273,10 +315,16 @@ class AlarmSettings extends Equatable {
       androidFullScreenIntent:
           androidFullScreenIntent ?? this.androidFullScreenIntent,
       allowAlarmOverlap: allowAlarmOverlap ?? this.allowAlarmOverlap,
+      allowSameSecondScheduling:
+          allowSameSecondScheduling ?? this.allowSameSecondScheduling,
       iOSBackgroundAudio: iOSBackgroundAudio ?? this.iOSBackgroundAudio,
       androidStopAlarmOnTermination:
           androidStopAlarmOnTermination ?? this.androidStopAlarmOnTermination,
-      payload: payload?.call() ?? this.payload,
+      preferConnectedAudioDevice:
+          preferConnectedAudioDevice ?? this.preferConnectedAudioDevice,
+      // The function wrapper allows callers to clear the payload by
+      // explicitly returning null.
+      payload: payload != null ? payload() : this.payload,
       repeatingDays: repeatingDays ?? this.repeatingDays,
       mission: mission != null ? mission.call() : this.mission,
       snoozeLimit: snoozeLimit ?? this.snoozeLimit,
@@ -300,8 +348,10 @@ class AlarmSettings extends Equatable {
         warningNotificationOnKill,
         androidFullScreenIntent,
         allowAlarmOverlap,
+        allowSameSecondScheduling,
         iOSBackgroundAudio,
         androidStopAlarmOnTermination,
+        preferConnectedAudioDevice,
         payload,
         isEnabled,
         title,

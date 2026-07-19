@@ -8,16 +8,35 @@ class AlarmRingManager: NSObject {
 
     private static let logger = OSLog(subsystem: ALARM_BUNDLE, category: "AlarmRingManager")
 
+    /// State is confined to the main actor; see AlarmManager.
     private var previousVolume: Float?
     private var volumeEnforcementTimer: Timer?
     private var audioPlayer: AVAudioPlayer?
+    private var currentAlarmId: Int?
+    /// Pending tasks (audio completion callback and volume fades) that must
+    /// not outlive the current ring. Cancelled on stop so a stale completion
+    /// can never stop an alarm that was re-scheduled with the same id.
+    private var pendingTasks: [Task<Void, Never>] = []
 
     override private init() {
         super.init()
     }
 
-    func start(registrar: FlutterPluginRegistrar, assetAudioPath: String, loopAudio: Bool, volumeSettings: VolumeSettings, onComplete: (() -> Void)?) async {
+    @MainActor
+    func start(id: Int, registrar: FlutterPluginRegistrar, assetAudioPath: String?, loopAudio: Bool, volumeSettings: VolumeSettings, onComplete: (() -> Void)?) async {
         let start = Date()
+
+        // If another alarm is already ringing, stop it before starting the new one
+        if let currentId = self.currentAlarmId, currentId != id {
+            os_log(.info, log: AlarmRingManager.logger, "Overriding previous alarm ID=%d with new alarm ID=%d", currentId, id)
+            self.cancelPendingTasks()
+            self.audioPlayer?.stop()
+            self.audioPlayer = nil
+            self.volumeEnforcementTimer?.invalidate()
+            self.volumeEnforcementTimer = nil
+        }
+
+        self.currentAlarmId = id
 
         self.duckOtherAudios()
 
@@ -30,9 +49,11 @@ class AlarmRingManager: NSObject {
         }
 
         if volumeSettings.volumeEnforced {
-            self.volumeEnforcementTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            let timer = Timer(timeInterval: 1.0, repeats: true) { _ in
                 AlarmRingManager.shared.enforcementTimerTriggered(targetSystemVolume: targetSystemVolume)
             }
+            RunLoop.main.add(timer, forMode: .common)
+            self.volumeEnforcementTimer = timer
         }
 
         guard let audioPlayer = self.loadAudioPlayer(registrar: registrar, assetAudioPath: assetAudioPath) else {
@@ -57,26 +78,41 @@ class AlarmRingManager: NSObject {
             audioPlayer.volume = 1.0
         }
 
-        if !loopAudio {
-            Task {
+        if !loopAudio, let onComplete = onComplete {
+            let completionTask = Task {
                 try? await Task.sleep(nanoseconds: UInt64(audioPlayer.duration * 1_000_000_000))
-                onComplete?()
+                if Task.isCancelled {
+                    return
+                }
+                onComplete()
             }
+            self.pendingTasks.append(completionTask)
         }
 
         let runDuration = Date().timeIntervalSince(start)
         os_log(.debug, log: AlarmRingManager.logger, "Alarm ring started in %.2fs.", runDuration)
     }
 
-    func stop() async {
+    @MainActor
+    func stop(id: Int? = nil) async {
+        if let id = id, self.currentAlarmId != id {
+            os_log(.debug, log: AlarmRingManager.logger,
+                "Skipping stop for alarm ID=%d because current alarm is ID=%d", id, self.currentAlarmId ?? -1)
+            return
+        }
+
+        self.cancelPendingTasks()
+
         if self.volumeEnforcementTimer == nil && self.previousVolume == nil && self.audioPlayer == nil {
             os_log(.debug, log: AlarmRingManager.logger, "Alarm ringer already stopped.")
+            self.currentAlarmId = nil
             return
         }
 
         let start = Date()
 
-        self.mixOtherAudios()
+        self.audioPlayer?.stop()
+        self.audioPlayer = nil
 
         self.volumeEnforcementTimer?.invalidate()
         self.volumeEnforcementTimer = nil
@@ -86,11 +122,17 @@ class AlarmRingManager: NSObject {
             self.previousVolume = nil
         }
 
-        self.audioPlayer?.stop()
-        self.audioPlayer = nil
+        self.currentAlarmId = nil
+        self.mixOtherAudios()
 
         let runDuration = Date().timeIntervalSince(start)
         os_log(.debug, log: AlarmRingManager.logger, "Alarm ring stopped in %.2fs.", runDuration)
+    }
+
+    @MainActor
+    private func cancelPendingTasks() {
+        self.pendingTasks.forEach { $0.cancel() }
+        self.pendingTasks.removeAll()
     }
 
     private func duckOtherAudios() {
@@ -141,8 +183,8 @@ class AlarmRingManager: NSObject {
         return previousVolume
     }
 
-    @objc private func enforcementTimerTriggered(targetSystemVolume: Float) {
-        Task {
+    private func enforcementTimerTriggered(targetSystemVolume: Float) {
+        Task { @MainActor in
             let currentSystemVolume = self.getSystemVolume()
             if abs(currentSystemVolume - targetSystemVolume) > 0.01 {
                 os_log(.debug, log: AlarmRingManager.logger, "System volume changed. Restoring to %f.", targetSystemVolume)
@@ -151,26 +193,51 @@ class AlarmRingManager: NSObject {
         }
     }
 
-    private func loadAudioPlayer(registrar: FlutterPluginRegistrar, assetAudioPath: String) -> AVAudioPlayer? {
+    private func loadAudioPlayer(registrar: FlutterPluginRegistrar, assetAudioPath: String?) -> AVAudioPlayer? {
         let audioURL: URL
-        if assetAudioPath.hasPrefix("assets/") || assetAudioPath.hasPrefix("asset/") {
-            let filename = registrar.lookupKey(forAsset: assetAudioPath)
-            guard let audioPath = Bundle.main.path(forResource: filename, ofType: nil) else {
-                os_log(.error, log: AlarmRingManager.logger, "Audio file not found: %@", assetAudioPath)
+
+        if let assetAudioPath = assetAudioPath {
+            // Use provided audio path
+            if assetAudioPath.hasPrefix("assets/") || assetAudioPath.hasPrefix("asset/") {
+                let filename = registrar.lookupKey(forAsset: assetAudioPath)
+                guard let audioPath = Bundle.main.path(forResource: filename, ofType: nil) else {
+                    os_log(.error, log: AlarmRingManager.logger, "Audio file not found: %@", assetAudioPath)
+                    return nil
+                }
+                audioURL = URL(fileURLWithPath: audioPath)
+            } else {
+                guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+                    os_log(.error, log: AlarmRingManager.logger, "Document directory not found.")
+                    return nil
+                }
+                audioURL = documentsDirectory.appendingPathComponent(assetAudioPath)
+            }
+        } else {
+            // Use the bundled default alarm sound for iOS.
+            // Under SwiftPM the resources are exposed via Bundle.module; under
+            // CocoaPods they live in a nested alarm.bundle inside the framework.
+            #if SWIFT_PACKAGE
+            let resourceBundle: Bundle = .module
+            #else
+            let frameworkBundle = Bundle(for: Self.self)
+            guard let bundleURL = frameworkBundle.url(forResource: "alarm", withExtension: "bundle"),
+                  let nestedBundle = Bundle(url: bundleURL) else {
+                os_log(.error, log: AlarmRingManager.logger, "alarm.bundle not found inside the framework")
+                return nil
+            }
+            let resourceBundle = nestedBundle
+            #endif
+            guard let audioPath = resourceBundle.path(forResource: "default", ofType: "m4a") else {
+                os_log(.error, log: AlarmRingManager.logger, "Default alarm sound 'default.m4a' not found in resource bundle")
                 return nil
             }
             audioURL = URL(fileURLWithPath: audioPath)
-        } else {
-            guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-                os_log(.error, log: AlarmRingManager.logger, "Document directory not found.")
-                return nil
-            }
-            audioURL = documentsDirectory.appendingPathComponent(assetAudioPath)
+            os_log(.debug, log: AlarmRingManager.logger, "Using bundled default alarm sound: %@", audioURL.absoluteString)
         }
 
         do {
             let audioPlayer = try AVAudioPlayer(contentsOf: audioURL)
-            os_log(.debug, log: AlarmRingManager.logger, "Audio player loaded from: %@", assetAudioPath)
+            os_log(.debug, log: AlarmRingManager.logger, "Audio player loaded from: %@", audioURL.absoluteString)
             return audioPlayer
         } catch {
             os_log(.error, log: AlarmRingManager.logger, "Error loading audio player: %@", error.localizedDescription)
@@ -178,6 +245,7 @@ class AlarmRingManager: NSObject {
         }
     }
 
+    @MainActor
     private func fadeVolume(steps: [VolumeFadeStep]) {
         guard let audioPlayer = self.audioPlayer else {
             os_log(.error, log: AlarmRingManager.logger, "Cannot fade volume because audioPlayer is nil.")
@@ -199,14 +267,15 @@ class AlarmRingManager: NSObject {
             let targetVolume = Float(nextStep.volume)
 
             // Schedule the fade using setVolume for a smooth transition
-            Task {
+            let fadeTask = Task {
                 try? await Task.sleep(nanoseconds: UInt64(startTime * 1_000_000_000))
-                if !audioPlayer.isPlaying {
+                if Task.isCancelled || !audioPlayer.isPlaying {
                     return
                 }
                 os_log(.info, log: AlarmRingManager.logger, "Fading volume to %f over %f seconds.", targetVolume, fadeDuration)
                 audioPlayer.setVolume(targetVolume, fadeDuration: fadeDuration)
             }
+            self.pendingTasks.append(fadeTask)
         }
     }
 }

@@ -6,13 +6,18 @@ class AlarmManager: NSObject {
 
     private let registrar: FlutterPluginRegistrar
 
+    /// All mutable state below is confined to the main actor: every method
+    /// that touches it is marked @MainActor. This serializes concurrent
+    /// set/stop/isRinging calls that previously raced against each other.
     private var alarms: [Int: AlarmConfiguration] = [:]
+    private var ringingQueue: [Int] = []
 
     init(registrar: FlutterPluginRegistrar) {
         self.registrar = registrar
         super.init()
     }
 
+    @MainActor
     func setAlarm(alarmSettings: AlarmSettings) async {
         if self.alarms.keys.contains(alarmSettings.id) {
             os_log(.info, log: AlarmManager.logger, "Stopping alarm with identical ID=%d before scheduling a new one.", alarmSettings.id)
@@ -25,13 +30,7 @@ class AlarmManager: NSObject {
         let delayInSeconds = alarmSettings.dateTime.timeIntervalSinceNow
         let ringImmediately = delayInSeconds < 1
         if !ringImmediately {
-            let timer = Timer(timeInterval: delayInSeconds,
-                              target: self,
-                              selector: #selector(self.alarmTimerTrigerred(_:)),
-                              userInfo: alarmSettings.id,
-                              repeats: false)
-            RunLoop.main.add(timer, forMode: .common)
-            config.timer = timer
+            self.scheduleTimer(id: alarmSettings.id, delayInSeconds: delayInSeconds, config: config)
         }
 
         self.updateState()
@@ -47,13 +46,26 @@ class AlarmManager: NSObject {
         os_log(.info, log: AlarmManager.logger, "Set alarm for ID=%d complete.", alarmSettings.id)
     }
 
+    @MainActor
     func stopAlarm(id: Int, cancelNotif: Bool) async {
         if cancelNotif {
             NotificationManager.shared.cancelNotification(id: id)
         }
-        NotificationManager.shared.dismissNotification(id: id)
 
-        await AlarmRingManager.shared.stop()
+        // When the alarm stops automatically because the sound finished (non-looping
+        // alarms), we may want to keep the delivered notification so the user can
+        // still see it in the notification center. This is controlled by
+        // `NotificationSettings.keepNotificationAfterAlarmEnds`.
+        let shouldKeepDeliveredNotification =
+            !cancelNotif && (self.alarms[id]?.settings.notificationSettings.keepNotificationAfterAlarmEnds ?? false)
+
+        if !shouldKeepDeliveredNotification {
+            NotificationManager.shared.dismissNotification(id: id)
+        }
+
+        let wasRinging = self.alarms[id]?.state == .ringing
+
+        await AlarmRingManager.shared.stop(id: id)
 
         if let config = self.alarms[id] {
             config.timer?.invalidate()
@@ -61,17 +73,28 @@ class AlarmManager: NSObject {
             self.alarms.removeValue(forKey: id)
         }
 
+        // Make sure a stopped alarm can never be promoted from the queue.
+        self.ringingQueue.removeAll { $0 == id }
+
         self.updateState()
 
         await self.notifyAlarmStopped(id: id)
 
+        // If the stopped alarm was ringing, trigger the next queued alarm
+        if wasRinging {
+            self.triggerNextQueuedAlarm()
+        }
+
         os_log(.info, log: AlarmManager.logger, "Stop alarm for ID=%d complete.", id)
     }
 
+    @MainActor
     func stopAll() async {
         await NotificationManager.shared.removeAllNotifications()
 
         await AlarmRingManager.shared.stop()
+
+        self.ringingQueue.removeAll()
 
         let alarmIds = Array(self.alarms.keys)
         self.alarms.forEach { $0.value.timer?.invalidate() }
@@ -86,6 +109,7 @@ class AlarmManager: NSObject {
         os_log(.info, log: AlarmManager.logger, "Stop all complete.")
     }
 
+    @MainActor
     func isRinging(id: Int? = nil) -> Bool {
         guard let alarmId = id else {
             return self.alarms.values.contains(where: { $0.state == .ringing })
@@ -94,6 +118,7 @@ class AlarmManager: NSObject {
     }
 
     /// Ensures all alarm timers are valid and reschedules them if not.
+    @MainActor
     func checkAlarms() async {
         var rescheduled = 0
         for (id, config) in self.alarms {
@@ -117,19 +142,24 @@ class AlarmManager: NSObject {
                 continue
             }
 
-            let timer = Timer(timeInterval: delayInSeconds,
-                              target: self,
-                              selector: #selector(self.alarmTimerTrigerred(_:)),
-                              userInfo: config.settings.id,
-                              repeats: false)
-            RunLoop.main.add(timer, forMode: .common)
-            config.timer = timer
+            self.scheduleTimer(id: id, delayInSeconds: delayInSeconds, config: config)
         }
 
         os_log(.info, log: AlarmManager.logger, "Check alarms complete. Rescheduled %d timers.", rescheduled)
     }
 
-    @objc private func alarmTimerTrigerred(_ timer: Timer) {
+    @MainActor
+    private func scheduleTimer(id: Int, delayInSeconds: TimeInterval, config: AlarmConfiguration) {
+        let timer = Timer(timeInterval: delayInSeconds,
+                          target: self,
+                          selector: #selector(self.alarmTimerTriggered(_:)),
+                          userInfo: id,
+                          repeats: false)
+        RunLoop.main.add(timer, forMode: .common)
+        config.timer = timer
+    }
+
+    @objc private func alarmTimerTriggered(_ timer: Timer) {
         guard let alarmId = timer.userInfo as? Int else {
             os_log(.error, log: AlarmManager.logger, "Alarm timer had invalid userInfo: %@", String(describing: timer.userInfo))
             return
@@ -139,16 +169,27 @@ class AlarmManager: NSObject {
         }
     }
 
+    @MainActor
     private func ringAlarm(id: Int) async {
         guard let config = self.alarms[id] else {
             os_log(.error, log: AlarmManager.logger, "Alarm %d was not found and cannot be rung.", id)
             return
         }
 
+        // If another alarm is already ringing
         if !config.settings.allowAlarmOverlap && self.alarms.contains(where: { $1.state == .ringing }) {
-            os_log(.error, log: AlarmManager.logger, "Ignoring alarm with id %d because another alarm is already ringing.", id)
-            await self.stopAlarm(id: id, cancelNotif: true)
-            return
+            if config.settings.allowSameSecondScheduling {
+                // Queue for sequential ringing (like iOS system Clock app)
+                if !self.ringingQueue.contains(id) {
+                    self.ringingQueue.append(id)
+                }
+                os_log(.info, log: AlarmManager.logger, "Alarm %d queued because another alarm is already ringing.", id)
+                return
+            } else {
+                os_log(.error, log: AlarmManager.logger, "Ignoring alarm with id %d because another alarm is already ringing.", id)
+                await self.stopAlarm(id: id, cancelNotif: true)
+                return
+            }
         }
 
         if config.state == .ringing {
@@ -168,13 +209,14 @@ class AlarmManager: NSObject {
         BackgroundAudioManager.shared.stop()
 
         await AlarmRingManager.shared.start(
+            id: id,
             registrar: self.registrar,
             assetAudioPath: config.settings.assetAudioPath,
             loopAudio: config.settings.loopAudio,
             volumeSettings: config.settings.volumeSettings,
             onComplete: !config.settings.loopAudio ? { [weak self] in
                 Task {
-                    [self] in await self?.stopAlarm(id: id, cancelNotif: false)
+                    await self?.stopAlarm(id: id, cancelNotif: false)
                 }
             } : nil)
 
@@ -229,6 +271,24 @@ class AlarmManager: NSObject {
         }
     }
 
+    @MainActor
+    private func triggerNextQueuedAlarm() {
+        guard !self.ringingQueue.isEmpty else { return }
+        // FIFO: the alarm that was queued first rings first, matching the
+        // documented sequential behavior.
+        let nextId = self.ringingQueue.removeFirst()
+        guard self.alarms[nextId] != nil else {
+            os_log(.error, log: AlarmManager.logger, "Queued alarm %d no longer exists, skipping.", nextId)
+            self.triggerNextQueuedAlarm()
+            return
+        }
+        os_log(.info, log: AlarmManager.logger, "Triggering queued alarm %d.", nextId)
+        Task {
+            await self.ringAlarm(id: nextId)
+        }
+    }
+
+    @MainActor
     private func updateState() {
         if self.alarms.contains(where: { $1.state == .scheduled && $1.settings.warningNotificationOnKill }) {
             AppTerminateManager.shared.startMonitoring()

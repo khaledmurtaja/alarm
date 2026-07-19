@@ -6,7 +6,7 @@ If you are using a plugin version below `3.0.0`, follow [these installation step
 In your `android/app/build.gradle`, make sure you have the following config:
 ```Gradle
 android {
-  compileSdkVersion 34
+  compileSdkVersion 35
   [...]
   defaultConfig {
     [...]
@@ -20,9 +20,16 @@ android {
 In your `android/settings.gradle`, ensure you have the following Kotlin plugin configuration:
 ```Gradle
 plugins {
-    id "org.jetbrains.kotlin.android" version "1.9.0" apply false  // Must be at least 1.9.0
+    id "org.jetbrains.kotlin.android" version "2.0.0" apply false  // Must be at least 2.0.0
 }
 ```
+
+> **Android Gradle Plugin 9+:** keep the Kotlin plugin declaration above. AGP 9's built-in Kotlin is not yet usable with Flutter (the tooling and some plugin dependencies still require the standalone Kotlin plugin), so make sure your `android/gradle.properties` opts out of it — Flutter's tooling adds these flags automatically on first build:
+>
+> ```properties
+> android.builtInKotlin=false
+> android.newDsl=false
+> ```
 
 ## Step 3
 Then, add the following permissions to your `AndroidManifest.xml` within the `<manifest></manifest>` tags:
@@ -63,7 +70,7 @@ Inside the <application> tag of your `AndroidManifest.xml`, add the following de
 Necessary if you want to enable an optional notification with `Alarm.setWarningNotificationOnKill` to alert users if the app is terminated, hinting at a rare chance the alarm may not work.
 
 ## Step 5
-To guarantee that your alarm's foreground service can trigger when the app is in the background, it's recommanded to verify and request the necessary permission for scheduling exact alarms on Android 12+ devices. This step is particularly important due to varying device policies.
+To guarantee that your alarm's foreground service can trigger when the app is in the background, it's recommended to verify and request the necessary permission for scheduling exact alarms on Android 12+ devices. This step is particularly important due to varying device policies.
 
 Leverage the [permission_handler](https://pub.dev/packages/permission_handler) package to check and request this permission seamlessly within your Flutter application. Here's an example to integrate into your code:
 

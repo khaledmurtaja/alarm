@@ -32,11 +32,9 @@ class _ExampleAlarmHomeShortcutButtonState
     setState(() => showMenu = false);
 
     final alarmSettings = AlarmSettings(
-      id: DateTime.now().millisecondsSinceEpoch % 10000,
+      // +1 so the id can never be 0, which the plugin rejects.
+      id: DateTime.now().millisecondsSinceEpoch % 10000 + 1,
       dateTime: dateTime,
-      assetAudioPath: 'assets/marimba.mp3',
-      audioName: '',
-      title: '',
       volumeSettings: VolumeSettings.fixed(volume: volume),
       notificationSettings: NotificationSettings(
         title: 'Alarm example',

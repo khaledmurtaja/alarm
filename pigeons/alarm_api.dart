@@ -7,7 +7,7 @@ import 'package:pigeon/pigeon.dart';
   PigeonOptions(
     dartOut: 'lib/src/generated/platform_bindings.g.dart',
     dartPackageName: 'alarm',
-    swiftOut: 'ios/Classes/generated/FlutterBindings.g.swift',
+    swiftOut: 'ios/alarm/Sources/alarm/generated/FlutterBindings.g.swift',
     kotlinOut:
         'android/src/main/kotlin/com/gdelataillade/alarm/generated/FlutterBindings.g.kt',
     kotlinOptions: KotlinOptions(
@@ -27,13 +27,15 @@ class AlarmSettingsWire {
     required this.warningNotificationOnKill,
     required this.androidFullScreenIntent,
     required this.allowAlarmOverlap,
+    required this.allowSameSecondScheduling,
     required this.iOSBackgroundAudio,
     required this.androidStopAlarmOnTermination,
+    required this.preferConnectedAudioDevice,
   });
 
   final int id;
   final int millisecondsSinceEpoch;
-  final String assetAudioPath;
+  final String? assetAudioPath;
   final VolumeSettingsWire volumeSettings;
   final NotificationSettingsWire notificationSettings;
   final bool loopAudio;
@@ -41,8 +43,10 @@ class AlarmSettingsWire {
   final bool warningNotificationOnKill;
   final bool androidFullScreenIntent;
   final bool allowAlarmOverlap;
+  final bool allowSameSecondScheduling;
   final bool iOSBackgroundAudio;
   final bool androidStopAlarmOnTermination;
+  final bool preferConnectedAudioDevice;
 }
 
 class VolumeSettingsWire {
@@ -51,12 +55,14 @@ class VolumeSettingsWire {
     required this.fadeDurationMillis,
     required this.fadeSteps,
     required this.volumeEnforced,
+    required this.showSystemUI,
   });
 
   final double? volume;
   final int? fadeDurationMillis;
   final List<VolumeFadeStepWire> fadeSteps;
   final bool volumeEnforced;
+  final bool showSystemUI;
 }
 
 class VolumeFadeStepWire {
@@ -79,6 +85,7 @@ class NotificationSettingsWire {
     required this.iconColorRed,
     required this.iconColorGreen,
     required this.iconColorBlue,
+    required this.keepNotificationAfterAlarmEnds,
   });
 
   final String title;
@@ -89,6 +96,7 @@ class NotificationSettingsWire {
   final double? iconColorRed;
   final double? iconColorGreen;
   final double? iconColorBlue;
+  final bool keepNotificationAfterAlarmEnds;
 }
 
 /// Errors that can occur when interacting with the Alarm API.
