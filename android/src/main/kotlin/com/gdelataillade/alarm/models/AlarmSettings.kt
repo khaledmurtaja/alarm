@@ -47,7 +47,7 @@ data class AlarmSettings(
                 allowAlarmOverlap = e.allowAlarmOverlap,
                 allowSameSecondScheduling = e.allowSameSecondScheduling,
                 androidStopAlarmOnTermination = e.androidStopAlarmOnTermination,
-                repeatingDays = e.repeatingDays.map { it.toInt() }, // if present on the wire type
+               // repeatingDays = e.repeatingDays.map { it.toInt() }, // if present on the wire type
                 preferConnectedAudioDevice = e.preferConnectedAudioDevice,
             )
         }
